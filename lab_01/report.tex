@@ -1,13 +1,10 @@
 % ================== ЛАБОРАТОРНАЯ РАБОТА №1 ==================
-\documentclass[12pt,a4paper]{article}
+\documentclass[14pt,a4paper]{extarticle}
 
 \usepackage[utf8]{inputenc}
 \usepackage[russian]{babel}
 \usepackage{geometry}
-\geometry{left=25mm,right=15mm,top=20mm,bottom=20mm}
-
-\usepackage{setspace}
-\onehalfspacing
+\geometry{left=30mm,right=15mm,top=20mm,bottom=20mm}
 
 \usepackage{indentfirst}
 \setlength{\parindent}{1.25cm}
@@ -15,33 +12,30 @@
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{float}
-\usepackage{listings}
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{caption}
+\usepackage{setspace}
+\setstretch{1.0}
 
-\lstset{
-  language=Python,
-  basicstyle=\footnotesize\ttfamily,
-  keywordstyle=\color{blue},
-  commentstyle=\color{gray},
-  stringstyle=\color{red},
-  numbers=left,
-  numberstyle=\tiny\color{gray},
-  frame=single,
-  breaklines=true,
-  inputencoding=utf8,
-  extendedchars=true,
-  literate={а}{{\cyra}}1 {б}{{\cyrb}}1 {в}{{\cyrv}}1 {г}{{\cyrg}}1
-           {д}{{\cyrd}}1 {е}{{\cyre}}1 {ё}{{\cyryo}}1 {ж}{{\cyrzh}}1
-           {з}{{\cyrz}}1 {и}{{\cyri}}1 {й}{{\cyrishrt}}1 {к}{{\cyrk}}1
-           {л}{{\cyrl}}1 {м}{{\cyrm}}1 {н}{{\cyrn}}1 {о}{{\cyro}}1
-           {п}{{\cyrp}}1 {р}{{\cyrr}}1 {с}{{\cyrs}}1 {т}{{\cyrt}}1
-           {у}{{\cyru}}1 {ф}{{\cyrf}}1 {х}{{\cyrh}}1 {ц}{{\cyrc}}1
-           {ч}{{\cyrch}}1 {ш}{{\cyrsh}}1 {щ}{{\cyrshch}}1 {ъ}{{\cyrhrdsn}}1
-           {ы}{{\cyrery}}1 {ь}{{\cyrsftsn}}1 {э}{{\cyrerev}}1 {ю}{{\cyryu}}1
-           {я}{{\cyrya}}1
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\normalsize\bfseries}{\thesection}{1em}{\MakeUppercase}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{1em}{}
+\titlespacing{\section}{\parindent}{3.5ex plus 1ex minus .2ex}{2.3ex plus .2ex}
+\titlespacing{\subsection}{\parindent}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[R]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
 }
+
+\renewcommand{\contentsname}{\centering СОДЕРЖАНИЕ}
 
 \begin{document}
 
@@ -141,7 +135,7 @@ P = \begin{pmatrix} -0.5 & -0.5 & 0.3 & -0.1 \\ -0.5 & 0.5 & -0.5 & 1.0 \end{pma
 T = \begin{pmatrix} 0 & 0 & 1 & 1 \end{pmatrix}.
 \end{equation}
 
-Алгоритм обучения персептрона был реализован на Python с использованием NumPy. Веса инициализировались нулями, скорость обучения $\eta = 1.0$. Обучение прошло успешно~--- персептрон сошёлся за 3 эпохи, достигнув 100\% точности.
+Реализован алгоритм обучения персептрона. Веса инициализировались нулями, скорость обучения $\eta = 1.0$. Обучение прошло успешно~--- персептрон сошёлся за 3 эпохи, достигнув 100\% точности.
 
 Результаты визуализированы: входные точки окрашены по классам, построена разделяющая прямая $w_1 x_1 + w_2 x_2 + b = 0$.
 
@@ -172,6 +166,6 @@ T = \begin{pmatrix} 0 & 1 & 1 & 0 \end{pmatrix}.
 
 \section{Выводы}
 
-В ходе лабораторной работы изучены принципы работы и обучения персептрона. Реализация на Python подтвердила теоретические результаты: теорему о сходимости персептрона для линейно разделимых данных и невозможность решения задачи XOR однослойной архитектурой. Многонейронный персептрон позволяет решать задачи с большим числом классов, формируя несколько разделяющих границ.
+В ходе лабораторной работы изучены принципы работы и обучения персептрона. Экспериментальные результаты подтвердили теоретические положения: теорему о сходимости персептрона для линейно разделимых данных и невозможность решения задачи XOR однослойной архитектурой. Многонейронный персептрон позволяет решать задачи с большим числом классов, формируя несколько разделяющих границ.
 
 \end{document}

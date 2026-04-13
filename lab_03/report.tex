@@ -1,13 +1,10 @@
 % ================== ЛАБОРАТОРНАЯ РАБОТА №3 ==================
-\documentclass[12pt,a4paper]{article}
+\documentclass[14pt,a4paper]{extarticle}
 
 \usepackage[utf8]{inputenc}
 \usepackage[russian]{babel}
 \usepackage{geometry}
-\geometry{left=25mm,right=15mm,top=20mm,bottom=20mm}
-
-\usepackage{setspace}
-\onehalfspacing
+\geometry{left=30mm,right=15mm,top=20mm,bottom=20mm}
 
 \usepackage{indentfirst}
 \setlength{\parindent}{1.25cm}
@@ -15,22 +12,30 @@
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{float}
-\usepackage{listings}
 \usepackage{xcolor}
 \usepackage{hyperref}
 \usepackage{caption}
+\usepackage{setspace}
+\setstretch{1.0}
 
-\lstset{
-  language=Python,
-  basicstyle=\footnotesize\ttfamily,
-  keywordstyle=\color{blue},
-  commentstyle=\color{gray},
-  stringstyle=\color{red},
-  numbers=left,
-  numberstyle=\tiny\color{gray},
-  frame=single,
-  breaklines=true,
+\usepackage{titlesec}
+\titleformat{\section}{\normalfont\normalsize\bfseries}{\thesection}{1em}{\MakeUppercase}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{1em}{}
+\titlespacing{\section}{\parindent}{3.5ex plus 1ex minus .2ex}{2.3ex plus .2ex}
+\titlespacing{\subsection}{\parindent}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[R]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
 }
+
+\renewcommand{\contentsname}{\centering СОДЕРЖАНИЕ}
 
 \begin{document}
 
@@ -143,7 +148,7 @@ y(x) = \sin(x) \cdot \cos(2x) + 0.5, \quad x \in [-2\pi, 2\pi].
 
 \subsection{Реализация нейронной сети}
 
-Реализован класс \texttt{NeuralNetwork} на Python (NumPy) со следующими компонентами:
+Реализована двухслойная нейронная сеть со следующими компонентами:
 \begin{itemize}
 \item Инициализация весов по методу Ксавье (Xavier): $W \sim \mathcal{N}(0, \sqrt{2/(n_{in}+n_{out})})$.
 \item Прямой проход: $h = \tanh(W_1 x + b_1)$, $\hat{y} = W_2 h + b_2$.
