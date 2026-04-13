@@ -1,3 +1,37 @@
-.ipynb_checkpoints/
+# Python
 __pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Data (large files — add selectively)
+data/*.csv
+data/*.parquet
+data/*.xlsx
+!data/.gitkeep
+
+# LaTeX report build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
