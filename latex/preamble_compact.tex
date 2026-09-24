@@ -1,0 +1,32 @@
+% =============================================================
+% preamble_compact.tex — компактный вариант оформления отчётов
+% Основа — preamble.tex (СТП БГУИР); здесь только уплотнение:
+% разделы без принудительного перехода на новую страницу,
+% меньшие вертикальные отступы, плотные списки и подписи.
+% =============================================================
+\input{../../latex/preamble}
+
+% Разделы идут подряд, без \newpage
+\titleformat{\section}
+  {\normalfont\fontsize{14}{17}\selectfont\bfseries}
+  {\thesection}{0.5em}{\MakeUppercase}
+\titlespacing*{\section}{1.25cm}{12pt}{6pt}
+\titlespacing*{\subsection}{1.25cm}{8pt}{4pt}
+
+% Плотнее плавающие объекты и подписи
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{6pt plus 2pt minus 2pt}
+\setlength{\intextsep}{6pt plus 2pt minus 2pt}
+\captionsetup[figure]{skip=3pt, font={small}}
+\captionsetup[table]{skip=2pt, font={small}}
+\setlength{\abovedisplayskip}{4pt}
+\setlength{\belowdisplayskip}{4pt}
+
+% Таблицы компактнее
+\renewcommand{\arraystretch}{1.05}
+\setlength{\tabcolsep}{5pt}
+
+% Номера рисунков и таблиц — сквозные (без привязки к разделам)
+\counterwithout{figure}{section}
+\counterwithout{table}{section}
+\counterwithout{equation}{section}

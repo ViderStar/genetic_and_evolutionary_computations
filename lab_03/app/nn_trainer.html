@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тренажёр двухслойной сети</title>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@3.1.0/plotly.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f5f4f0;
+    --surface: #fcfcfb;
+    --surface-2: #f0efec;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.10);
+    --accent: #2a78d6;
+    --accent-ink: #ffffff;
+    --net: #eb6834;
+    --points: #52514e;
+    --goal: #d03b3b;
+    --good: #0ca30c;
+    --warn: #b87900;
+    --bad: #d03b3b;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --surface-2: #242422; --ink: #ffffff; --ink-2: #c3c2b7;
+      --muted: #898781; --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+      --accent: #3987e5; --net: #d95926; --points: #c3c2b7; --goal: #e66767; --good: #0ca30c;
+      --warn: #fab219; --bad: #e66767; --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #242422; --ink: #ffffff; --ink-2: #c3c2b7;
+    --muted: #898781; --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --accent: #3987e5; --net: #d95926; --points: #c3c2b7; --goal: #e66767; --good: #0ca30c;
+    --warn: #fab219; --bad: #e66767; --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--ink);
+    font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  header { padding: 20px 24px 8px; max-width: 1480px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+  header p { margin: 4px 0 0; color: var(--ink-2); }
+  .layout {
+    display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px;
+    max-width: 1480px; margin: 0 auto; padding: 12px 24px 32px;
+  }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
+  aside.card { padding: 16px; align-self: start; position: sticky; top: 12px; }
+  .group { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .group:first-child { padding-top: 0; }
+  .group:last-child { border-bottom: 0; padding-bottom: 0; }
+  .group h2 { margin: 0 0 10px; font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  label { display: block; color: var(--ink-2); font-size: 13px; margin: 10px 0 4px; }
+  label:first-of-type { margin-top: 0; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .row output { min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); }
+  input[type=range] { flex: 1; accent-color: var(--accent); }
+  select, input[type=text], input[type=number] {
+    width: 100%; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--axis);
+    background: var(--surface); color: var(--ink); font: inherit; font-variant-numeric: tabular-nums;
+  }
+  input.invalid { border-color: var(--bad); outline: 1px solid var(--bad); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 3px; min-height: 16px; }
+  .hint.err { color: var(--bad); }
+  .formula { font-family: "Cambria Math", "STIX Two Math", Georgia, serif; font-size: 15px; padding: 8px 10px; background: var(--surface-2); border-radius: 8px; margin-top: 8px; }
+  .buttons { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; }
+  button {
+    font: inherit; font-weight: 600; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--axis);
+    background: var(--surface); color: var(--ink); cursor: pointer; transition: background .15s, transform .05s;
+  }
+  button:hover { background: var(--surface-2); }
+  button:active { transform: translateY(1px); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.primary:hover { filter: brightness(1.07); background: var(--accent); }
+  button:disabled { opacity: .45; cursor: default; }
+  button.wide { width: 100%; margin-top: 8px; }
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--ink-2); font-size: 13px; cursor: pointer; }
+  .check input { accent-color: var(--accent); }
+  main { display: grid; gap: 16px; min-width: 0; align-content: start; }
+  .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .stat { padding: 12px 14px; }
+  .stat .k { color: var(--muted); font-size: 12px; }
+  .stat .v { font-size: 22px; font-weight: 650; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stat .v small { font-size: 13px; color: var(--ink-2); font-weight: 500; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 14px !important; font-weight: 600; }
+  .chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .chip.run::before { background: var(--accent); animation: pulse 1s infinite; }
+  .chip.ok::before { background: var(--good); }
+  .chip.warn::before { background: var(--warn); }
+  .chip.bad::before { background: var(--bad); }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .plots { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 16px; }
+  .plot-card { padding: 12px 12px 4px; min-width: 0; }
+  .plot-card h3 { margin: 2px 6px 0; font-size: 15px; font-weight: 650; }
+  .plot-card .sub { margin: 0 6px; color: var(--muted); font-size: 12px; }
+  .plot { width: 100%; height: 420px; }
+  .plot.small { height: 340px; }
+  .hidden { display: none !important; }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; margin: 8px 0 10px; }
+  th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  th:first-child, td:first-child { text-align: left; }
+  td.ok { color: var(--good); font-weight: 600; }
+  td.no { color: var(--muted); }
+  .kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--axis); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--ink-2); }
+  footer { max-width: 1480px; margin: 0 auto; padding: 0 24px 28px; color: var(--muted); font-size: 12px; }
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+    aside.card { position: static; }
+    .plots { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) {
+    header { padding: 16px 16px 4px; }
+    .layout { padding: 12px 16px 24px; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .plot { height: 340px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Аппроксимация функции двухслойной нейронной сетью</h1>
+  <p>Лабораторная работа №3 · сеть 1–S–1: <b>tansig</b> в скрытом слое, <b>purelin</b> на выходе · обучение обратным распространением ошибки</p>
+</header>
+
+<div class="layout">
+  <aside class="card">
+    <div class="group">
+      <h2>Функция</h2>
+      <label for="variant">Вариант</label>
+      <select id="variant"></select>
+      <div class="formula" id="formula"></div>
+      <div class="hint" id="gridInfo"></div>
+    </div>
+
+    <div class="group">
+      <h2>Сеть и обучение</h2>
+      <label for="neurons">Нейронов в скрытом слое, S</label>
+      <div class="row"><input type="range" id="neurons" min="1" max="30" step="1" value="10"><output id="neuronsOut">10</output></div>
+      <label for="algo">Алгоритм (net.trainFcn)</label>
+      <select id="algo">
+        <option value="traingd" selected>traingd — градиентный спуск (по заданию)</option>
+        <option value="traingdm">traingdm — спуск с моментом</option>
+        <option value="traingdx">traingdx — момент + адаптивный lr</option>
+        <option value="trainlm">trainlm — Левенберг — Марквардт</option>
+      </select>
+      <div class="grid2">
+        <div>
+          <label for="lr">lr, η ∈ [0.01; 0.5]</label>
+          <input type="text" id="lr" value="0.05" inputmode="decimal">
+        </div>
+        <div>
+          <label for="goal">goal ∈ [1e-4; 1e-1]</label>
+          <input type="text" id="goal" value="1e-2" inputmode="decimal">
+        </div>
+        <div>
+          <label for="epochs">epochs</label>
+          <input type="number" id="epochs" value="600" min="1" max="100000" step="1">
+        </div>
+        <div>
+          <label for="show">show</label>
+          <input type="number" id="show" value="50" min="1" max="10000" step="1">
+        </div>
+      </div>
+      <div class="hint" id="paramHint"></div>
+      <label for="seed">Инициализация (seed)</label>
+      <div class="row">
+        <input type="number" id="seed" value="0" min="0" step="1" style="flex:1">
+        <button id="reseed" title="Новая случайная инициализация" style="padding:7px 10px">🎲</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>Мультипликация</h2>
+      <label for="delay">Задержка (мс)</label>
+      <div class="row"><input type="range" id="delay" min="0" max="200" step="1" value="15"><output id="delayOut">15</output></div>
+      <div class="hint">Пауза между эпохами. 0 — максимальная скорость.</div>
+      <div class="buttons" style="margin-top:10px">
+        <button class="primary" id="start">▶ Старт</button>
+        <button id="pause" disabled>⏸ Пауза</button>
+        <button id="reset">⟲ Сброс</button>
+      </div>
+      <label class="check"><input type="checkbox" id="trail" checked> След прошлых кривых</label>
+      <label class="check"><input type="checkbox" id="showNeurons"> Вклады нейронов</label>
+      <div class="hint" style="margin-top:8px"><span class="kbd">Пробел</span> — старт/пауза, <span class="kbd">R</span> — сброс</div>
+    </div>
+
+    <div class="group">
+      <h2>Серия экспериментов</h2>
+      <button class="wide" id="series">Серия S = 1, 2, 5, 10, 20, 30</button>
+      <div class="hint">Обучает сети без анимации с текущими параметрами.</div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="stats">
+      <div class="card stat"><div class="k">Эпоха</div><div class="v" id="stEpoch">0 <small>/ 600</small></div></div>
+      <div class="card stat"><div class="k">MSE (performance)</div><div class="v" id="stMse">—</div></div>
+      <div class="card stat"><div class="k">Норма градиента</div><div class="v" id="stGrad">—</div></div>
+      <div class="card stat"><div class="k" id="stStepK">lr</div><div class="v" id="stStep">—</div></div>
+      <div class="card stat"><div class="k">Состояние</div><div class="v"><span class="chip" id="stState">готово</span></div></div>
+    </div>
+
+    <div class="plots">
+      <div class="card plot-card">
+        <h3>Аппроксимация</h3>
+        <div class="sub" id="approxSub">точки — f(t) на сетке с шагом 0.1; линия — выход сети, перерисовывается каждые show эпох</div>
+        <div id="plotApprox" class="plot"></div>
+      </div>
+      <div class="card plot-card">
+        <h3>Ошибка обучения</h3>
+        <div class="sub">MSE по эпохам (логарифмическая шкала), пунктир — goal</div>
+        <div id="plotPerf" class="plot"></div>
+      </div>
+    </div>
+
+    <div class="card plot-card hidden" id="neuronsCard">
+      <h3>Вклады нейронов скрытого слоя</h3>
+      <div class="sub">w₂ᵢ·tansig(w₁ᵢt + b₁ᵢ) — выход сети есть их сумма плюс смещение</div>
+      <div id="plotNeurons" class="plot small"></div>
+    </div>
+
+    <div class="card plot-card hidden" id="seriesCard">
+      <h3>Серия экспериментов</h3>
+      <div class="sub" id="seriesSub"></div>
+      <div style="overflow-x:auto;padding:0 6px"><table id="seriesTable"></table></div>
+      <div id="plotSeries" class="plot"></div>
+    </div>
+  </main>
+</div>
+<footer>Реализация сети и алгоритмов обучения — на JavaScript без библиотек машинного обучения; нормировка входа и выхода mapminmax и инициализация Нгуена — Уидроу, как в newff.</footer>
+
+<script>
+'use strict';
+// ---------------- варианты заданий ----------------
+const VARIANTS = [
+  { a: 1.5, b: 0.9, fn: 'sin', c: 1, d: 1.1, r: 5 },
+  { a: 1.3, b: 1.9, fn: 'cos', c: 1.1, d: -1.5, r: 6 },
+  { a: 1, b: 1.3, fn: 'sin', c: 0.5, d: 1, r: 7 },
+  { a: 1.1, b: -1.7, fn: 'cos', c: 1, d: 1.5, r: 9 },
+  { a: 2.5, b: 1.7, fn: 'sin', c: 1.1, d: 0.7, r: 10 },
+  { a: 0.5, b: -1.4, fn: 'cos', c: 0.5, d: 1.1, r: 9 },
+  { a: 1.7, b: 1.5, fn: 'sin', c: 0.7, d: -1.4, r: 8 },
+  { a: 1.5, b: 0.9, fn: 'cos', c: 1, d: 1.1, r: 7 },
+  { a: 0.3, b: 1.1, fn: 'sin', c: 1.8, d: -0.5, r: 6 },
+  { a: 0.5, b: 1.9, fn: 'cos', c: 0.7, d: -1.3, r: 5 },
+  { a: 2.5, b: -0.9, fn: 'sin', c: 1.1, d: 1.7, r: 6 },
+  { a: 2.1, b: 0.8, fn: 'cos', c: 1.3, d: -0.9, r: 7 },
+  { a: 0.9, b: 1.5, fn: 'sin', c: 1.1, d: 1, r: 8 },
+  { a: 1.7, b: -1.9, fn: 'cos', c: 1.4, d: -1.7, r: 9 },
+];
+const num = v => (v < 0 ? '− ' + (-v) : '+ ' + v);
+function variantText(v) {
+  const lin = (v.a === 1 ? 't' : v.a + 't') + ' ' + num(v.b);
+  const arg = (v.c === 1 ? 't' : v.c + 't') + ' ' + num(v.d);
+  return `f(t) = (${lin})·${v.fn}(${arg}),  t ∈ [−${v.r}; ${v.r}]`;
+}
+
+// ---------------- генератор случайных чисел с seed ----------------
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+// ---------------- данные ----------------
+const D = {};
+function makeData(vi) {
+  const v = VARIANTS[vi];
+  const f = t => (v.a * t + v.b) * (v.fn === 'sin' ? Math.sin(v.c * t + v.d) : Math.cos(v.c * t + v.d));
+  const n = Math.round(2 * v.r / 0.1) + 1;
+  D.t = Array.from({ length: n }, (_, i) => +(-v.r + 0.1 * i).toFixed(10));
+  D.y = D.t.map(f);
+  D.td = Array.from({ length: 561 }, (_, i) => -v.r + 2 * v.r * i / 560);
+  D.yd = D.td.map(f);
+  D.tlo = -v.r; D.thi = v.r;
+  D.ylo = Math.min(...D.y); D.yhi = Math.max(...D.y);
+  D.xn = D.t.map(x => 2 * (x - D.tlo) / (D.thi - D.tlo) - 1);
+  D.yn = D.y.map(y => 2 * (y - D.ylo) / (D.yhi - D.ylo) - 1);
+  D.xdn = D.td.map(x => 2 * (x - D.tlo) / (D.thi - D.tlo) - 1);
+  D.ky = (D.yhi - D.ylo) / 2;
+  D.N = n;
+}
+const rev = yn => (yn + 1) * D.ky + D.ylo;
+
+// ---------------- сеть 1-S-1 ----------------
+// theta = [w1(S), b1(S), w2(S), b2]
+function initNet(S, seed) {
+  const rnd = mulberry32(seed * 7919 + S * 104729 + 17);
+  const th = new Float64Array(3 * S + 1);
+  const beta = 0.7 * S;
+  for (let i = 0; i < S; i++) th[i] = (rnd() * 2 - 1 >= 0 ? 1 : -1) * beta;          // Нгуен — Уидроу
+  for (let i = 0; i < S; i++) th[S + i] = S > 1 ? beta * (-1 + 2 * i / (S - 1)) * Math.sign(th[i]) : (rnd() * 2 - 1) * beta;
+  for (let i = 0; i < S; i++) th[2 * S + i] = rnd() - 0.5;
+  th[3 * S] = rnd() - 0.5;
+  return th;
+}
+function forward(th, S, xs, a1out) {
+  const out = new Float64Array(xs.length);
+  for (let n = 0; n < xs.length; n++) {
+    let o = th[3 * S];
+    for (let i = 0; i < S; i++) {
+      const a = Math.tanh(th[i] * xs[n] + th[S + i]);
+      if (a1out) a1out[n * S + i] = a;
+      o += th[2 * S + i] * a;
+    }
+    out[n] = o;
+  }
+  return out;
+}
+function perfOf(out) {            // MSE в исходных единицах y
+  let s = 0;
+  for (let n = 0; n < D.N; n++) { const e = (out[n] - D.yn[n]) * D.ky; s += e * e; }
+  return s / D.N;
+}
+function gradient(th, S) {        // backprop: градиент MSE в нормированном пространстве
+  const a1 = new Float64Array(D.N * S);
+  const out = forward(th, S, D.xn, a1);
+  const g = new Float64Array(th.length);
+  for (let n = 0; n < D.N; n++) {
+    const d2 = 2 * (out[n] - D.yn[n]) / D.N;
+    g[3 * S] += d2;
+    for (let i = 0; i < S; i++) {
+      const a = a1[n * S + i];
+      g[2 * S + i] += d2 * a;
+      const d1 = d2 * th[2 * S + i] * (1 - a * a);
+      g[i] += d1 * D.xn[n];
+      g[S + i] += d1;
+    }
+  }
+  return { g, out, a1 };
+}
+function solve(A, b, P) {         // Гаусс с выбором главного элемента
+  const M = A.map((row, i) => [...row, b[i]]);
+  for (let c = 0; c < P; c++) {
+    let p = c;
+    for (let r = c + 1; r < P; r++) if (Math.abs(M[r][c]) > Math.abs(M[p][c])) p = r;
+    [M[c], M[p]] = [M[p], M[c]];
+    const piv = M[c][c];
+    if (Math.abs(piv) < 1e-300) return null;
+    for (let r = c + 1; r < P; r++) {
+      const k = M[r][c] / piv;
+      if (k !== 0) for (let j = c; j <= P; j++) M[r][j] -= k * M[c][j];
+    }
+  }
+  const x = new Float64Array(P);
+  for (let r = P - 1; r >= 0; r--) {
+    let s = M[r][P];
+    for (let j = r + 1; j < P; j++) s -= M[r][j] * x[j];
+    x[r] = s / M[r][r];
+  }
+  return x;
+}
+
+// Тренер: один вызов step() = одна эпоха
+class Trainer {
+  constructor(opts) {
+    Object.assign(this, opts);                    // S, fcn, lr, goal, epochs, seed
+    this.th = initNet(this.S, this.seed);
+    this.dth = new Float64Array(this.th.length);
+    this.mu = 1e-3;
+    this.epoch = 0;
+    this.minGrad = this.fcn === 'trainlm' ? 1e-7 : 1e-5;
+    const r = gradient(this.th, this.S);
+    this.cache = r;
+    this.perf = [perfOf(r.out)];
+    this.gnorm = Math.hypot(...r.g);
+    this.stop = null;
+    this.check();
+  }
+  check() {
+    const p = this.perf[this.perf.length - 1];
+    if (!isFinite(p) || p > 1e8) this.stop = 'divergence';
+    else if (p <= this.goal) this.stop = 'goal';
+    else if (this.epoch >= this.epochs) this.stop = 'epochs';
+    else if (this.gnorm < this.minGrad) this.stop = 'min_grad';
+    return this.stop;
+  }
+  step() {
+    if (this.stop) return;
+    const { S } = this, P = this.th.length;
+    const { g, out, a1 } = this.cache;
+    const p = this.perf[this.perf.length - 1];
+    if (this.fcn === 'traingd') {
+      for (let k = 0; k < P; k++) this.th[k] -= this.lr * g[k];
+    } else if (this.fcn === 'traingdm') {
+      for (let k = 0; k < P; k++) { this.dth[k] = 0.9 * this.dth[k] - 0.1 * this.lr * g[k]; this.th[k] += this.dth[k]; }
+    } else if (this.fcn === 'traingdx') {
+      const dn = new Float64Array(P), tn = new Float64Array(P);
+      for (let k = 0; k < P; k++) { dn[k] = 0.9 * this.dth[k] - this.lr * g[k]; tn[k] = this.th[k] + dn[k]; }
+      const pn = perfOf(forward(tn, S, D.xn));
+      if (pn > p * 1.04) { this.lr *= 0.7; this.dth.fill(0); }
+      else { if (pn < p) this.lr *= 1.05; this.th = tn; this.dth = dn; }
+    } else if (this.fcn === 'trainlm') {
+      // J: N x P, e = out - yn
+      const J = new Float64Array(D.N * P), e = new Float64Array(D.N);
+      for (let n = 0; n < D.N; n++) {
+        e[n] = out[n] - D.yn[n];
+        for (let i = 0; i < S; i++) {
+          const a = a1[n * S + i], d1 = (1 - a * a) * this.th[2 * S + i];
+          J[n * P + i] = d1 * D.xn[n]; J[n * P + S + i] = d1; J[n * P + 2 * S + i] = a;
+        }
+        J[n * P + 3 * S] = 1;
+      }
+      const JtJ = Array.from({ length: P }, () => new Array(P).fill(0)), Jte = new Array(P).fill(0);
+      for (let n = 0; n < D.N; n++) {
+        const row = n * P;
+        for (let a = 0; a < P; a++) {
+          const ja = J[row + a];
+          if (ja === 0) continue;
+          Jte[a] += ja * e[n];
+          for (let b = a; b < P; b++) JtJ[a][b] += ja * J[row + b];
+        }
+      }
+      for (let a = 0; a < P; a++) for (let b = 0; b < a; b++) JtJ[a][b] = JtJ[b][a];
+      let e0 = 0; for (let n = 0; n < D.N; n++) e0 += e[n] * e[n];
+      let accepted = false;
+      while (this.mu <= 1e10) {
+        const A = JtJ.map((r, i) => r.map((v, j) => v + (i === j ? this.mu : 0)));
+        const dx = solve(A, Jte, P);
+        if (dx) {
+          const tn = this.th.map((v, k) => v - dx[k]);
+          const on = forward(tn, S, D.xn);
+          let e1 = 0; for (let n = 0; n < D.N; n++) { const d = on[n] - D.yn[n]; e1 += d * d; }
+          if (e1 < e0) { this.th = tn; this.mu = Math.max(this.mu * 0.1, 1e-20); accepted = true; break; }
+        }
+        this.mu *= 10;
+      }
+      if (!accepted) { this.stop = 'mu_max'; return; }
+    }
+    this.epoch++;
+    const r = gradient(this.th, this.S);
+    this.cache = r;
+    this.perf.push(perfOf(r.out));
+    this.gnorm = Math.hypot(...r.g);
+    this.check();
+  }
+  predictDense() { return Array.from(forward(this.th, this.S, D.xdn), rev); }
+  contributions() {
+    const S = this.S, a1 = new Float64Array(D.td.length * S);
+    forward(this.th, S, D.xdn, a1);
+    return Array.from({ length: S }, (_, i) => D.td.map((_, n) => a1[n * S + i] * this.th[2 * S + i] * D.ky));
+  }
+}
+
+// ---------------- UI ----------------
+const $ = id => document.getElementById(id);
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const STOP_TEXT = {
+  goal: ['цель достигнута', 'ok'], epochs: ['лимит эпох', 'warn'], min_grad: ['min_grad', 'warn'],
+  divergence: ['расходимость', 'bad'], mu_max: ['mu_max', 'warn'],
+};
+const SERIES_S = [1, 2, 5, 10, 20, 30];
+const SERIES_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#4a3aa7'];
+let tr = null, running = false, timer = null, trail = [], perfDrawn = 0;
+
+VARIANTS.forEach((v, i) => $('variant').add(new Option(`Вариант ${i + 1}`, i)));
+$('variant').value = 2;
+
+function fmt(v) {
+  if (!isFinite(v)) return '∞';
+  if (v === 0) return '0';
+  const a = Math.abs(v);
+  return a >= 1000 || a < 1e-3 ? v.toExponential(2).replace('e', '·10^').replace('+', '') : a >= 1 ? v.toFixed(3) : v.toPrecision(3);
+}
+function parseNum(s) { const v = Number(String(s).replace(',', '.').trim()); return isFinite(v) ? v : NaN; }
+
+function readParams() {
+  const errs = [];
+  const lr = parseNum($('lr').value), goal = parseNum($('goal').value);
+  const epochs = Math.round(parseNum($('epochs').value)), show = Math.round(parseNum($('show').value));
+  const fcn = $('algo').value;
+  const lrOk = fcn === 'trainlm' || (lr >= 0.01 && lr <= 0.5);
+  const goalOk = goal >= 1e-4 && goal <= 1e-1;
+  const epOk = epochs >= 1 && epochs <= 100000, shOk = show >= 1;
+  $('lr').classList.toggle('invalid', !lrOk); $('goal').classList.toggle('invalid', !goalOk);
+  $('epochs').classList.toggle('invalid', !epOk); $('show').classList.toggle('invalid', !shOk);
+  if (!lrOk) errs.push('lr должен быть в диапазоне [0.01; 0.5]');
+  if (!goalOk) errs.push('goal должен быть в диапазоне [1e-4; 1e-1]');
+  if (!epOk) errs.push('epochs: от 1 до 100000');
+  if (!shOk) errs.push('show ≥ 1');
+  const hint = $('paramHint');
+  hint.textContent = errs.length ? errs.join('; ') : (fcn === 'trainlm' ? 'Для trainlm lr не используется: шаг задаёт μ.' : '');
+  hint.classList.toggle('err', errs.length > 0);
+  $('lr').disabled = fcn === 'trainlm';
+  return errs.length ? null : { S: +$('neurons').value, fcn, lr, goal, epochs, show, seed: Math.max(0, Math.round(parseNum($('seed').value) || 0)) };
+}
+
+function baseLayout(extra) {
+  return Object.assign({
+    paper_bgcolor: css('--surface'), plot_bgcolor: css('--surface'),
+    font: { family: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif', size: 12, color: css('--ink-2') },
+    margin: { l: 56, r: 16, t: 16, b: 48 },
+    xaxis: { gridcolor: css('--grid'), linecolor: css('--axis'), zeroline: false, ticks: 'outside', tickcolor: css('--axis') },
+    yaxis: { gridcolor: css('--grid'), linecolor: css('--axis'), zeroline: false, ticks: 'outside', tickcolor: css('--axis') },
+    legend: { orientation: 'h', x: 0, y: -0.16, font: { size: 12, color: css('--ink-2') } },
+    hoverlabel: { bgcolor: css('--surface'), bordercolor: css('--axis'), font: { color: css('--ink') } },
+    showlegend: true,
+  }, extra);
+}
+const CFG = { displaylogo: false, responsive: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'] };
+
+function yRange() { const pad = 0.15 * (D.yhi - D.ylo); return [D.ylo - pad, D.yhi + pad]; }
+
+function drawApprox() {
+  const yhat = tr.predictDense();
+  const traces = [{
+    x: D.t, y: D.y, mode: 'markers', name: 'f(t)', marker: { color: css('--points'), size: 5, opacity: 0.7 },
+    hovertemplate: 't = %{x:.1f}<br>f = %{y:.3f}<extra></extra>',
+  }];
+  if ($('trail').checked) {
+    trail.forEach((tt, i) => traces.push({
+      x: D.td, y: tt.y, mode: 'lines', showlegend: false, hoverinfo: 'skip',
+      line: { color: css('--net'), width: 1.5 }, opacity: 0.08 + 0.32 * (i + 1) / trail.length,
+    }));
+  }
+  traces.push({
+    x: D.td, y: yhat, mode: 'lines', name: `выход сети, эпоха ${tr.epoch}`, line: { color: css('--net'), width: 3 },
+    hovertemplate: 't = %{x:.2f}<br>ŷ = %{y:.3f}<extra></extra>',
+  });
+  Plotly.react('plotApprox', traces, baseLayout({
+    xaxis: Object.assign(baseLayout().xaxis, { title: { text: 't' }, range: [D.tlo - 0.3, D.thi + 0.3] }),
+    yaxis: Object.assign(baseLayout().yaxis, { title: { text: 'y' }, range: yRange() }),
+    hovermode: 'closest',
+  }), CFG);
+  trail.push({ y: yhat, epoch: tr.epoch });
+  if (trail.length > 6) trail.shift();
+  if ($('showNeurons').checked) drawNeurons(yhat);
+}
+
+function drawNeurons(yhat) {
+  const C = tr.contributions();
+  const pal = ['#2a78d6', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948', '#eb6834'];
+  const traces = C.map((c, i) => ({
+    x: D.td, y: c, mode: 'lines', name: `нейрон ${i + 1}`, showlegend: C.length <= 8,
+    line: { color: pal[i % pal.length], width: 1.5 }, opacity: C.length > 8 ? 0.6 : 0.9,
+    hovertemplate: `нейрон ${i + 1}<br>` + 't = %{x:.2f}<br>вклад = %{y:.3f}<extra></extra>',
+  }));
+  traces.push({ x: D.td, y: yhat || tr.predictDense(), mode: 'lines', name: 'выход сети', line: { color: css('--ink'), width: 2.5 } });
+  Plotly.react('plotNeurons', traces, baseLayout({
+    xaxis: Object.assign(baseLayout().xaxis, { title: { text: 't' } }),
+    yaxis: Object.assign(baseLayout().yaxis, { title: { text: 'вклад' } }),
+  }), CFG);
+}
+
+function perfLayout() {
+  const p = tr.perf, maxP = Math.max(...p.filter(isFinite).slice(0, 5), tr.goal * 10);
+  const minP = Math.min(tr.goal / 3, ...p.filter(isFinite));
+  return baseLayout({
+    xaxis: Object.assign(baseLayout().xaxis, { title: { text: 'эпоха' }, range: [0, tr.epochs] }),
+    yaxis: Object.assign(baseLayout().yaxis, { title: { text: 'MSE' }, type: 'log',
+      range: [Math.log10(Math.max(minP, 1e-12)) - 0.2, Math.log10(Math.min(maxP, 1e8)) + 0.3] }),
+    hovermode: 'x unified',
+  });
+}
+function initPerf() {
+  perfDrawn = tr.perf.length;
+  Plotly.react('plotPerf', [
+    { x: [0], y: [tr.perf[0]], mode: 'lines', name: 'MSE', line: { color: css('--accent'), width: 2 },
+      hovertemplate: 'MSE = %{y:.4g}<extra></extra>' },
+    { x: [0, tr.epochs], y: [tr.goal, tr.goal], mode: 'lines', name: `goal = ${tr.goal}`,
+      line: { color: css('--goal'), width: 1.5, dash: 'dash' }, hoverinfo: 'skip' },
+    { x: [0], y: [tr.perf[0]], mode: 'markers', name: 'перерисовка (каждые show)',
+      marker: { color: css('--net'), size: 8, line: { color: css('--surface'), width: 1.5 } }, hoverinfo: 'skip' },
+  ], perfLayout(), CFG);
+}
+function extendPerf(withSnap) {
+  const n = tr.perf.length;
+  if (n > perfDrawn) {
+    const xs = [], ys = [];
+    for (let k = perfDrawn; k < n; k++) { xs.push(k); ys.push(isFinite(tr.perf[k]) ? tr.perf[k] : null); }
+    Plotly.extendTraces('plotPerf', { x: [xs], y: [ys] }, [0]);
+    perfDrawn = n;
+  }
+  if (withSnap) {
+    Plotly.extendTraces('plotPerf', { x: [[tr.epoch]], y: [[tr.perf[tr.epoch]]] }, [2]);
+    const pl = perfLayout();
+    Plotly.relayout('plotPerf', { 'yaxis.range': pl.yaxis.range });
+  }
+}
+
+function updateStats() {
+  $('stEpoch').innerHTML = `${tr.epoch} <small>/ ${tr.epochs}</small>`;
+  $('stMse').textContent = fmt(tr.perf[tr.perf.length - 1]);
+  $('stGrad').textContent = fmt(tr.gnorm);
+  if (tr.fcn === 'trainlm') { $('stStepK').textContent = 'μ (trainlm)'; $('stStep').textContent = fmt(tr.mu); }
+  else { $('stStepK').textContent = tr.fcn === 'traingdx' ? 'lr (адаптивный)' : 'lr'; $('stStep').textContent = fmt(tr.lr); }
+  const st = $('stState');
+  if (tr.stop) { const [txt, cls] = STOP_TEXT[tr.stop]; st.textContent = txt; st.className = 'chip ' + cls; }
+  else if (running) { st.textContent = 'обучение'; st.className = 'chip run'; }
+  else { st.textContent = tr.epoch ? 'пауза' : 'готово'; st.className = 'chip'; }
+}
+
+function setButtons() {
+  $('start').disabled = running || !!(tr && tr.stop);
+  $('pause').disabled = !running;
+  $('start').textContent = tr && tr.epoch > 0 && !tr.stop ? '▶ Продолжить' : '▶ Старт';
+}
+
+function reset() {
+  stop();
+  const p = readParams();
+  if (!p) { setButtons(); return false; }
+  tr = new Trainer(p);
+  tr.show = p.show;
+  trail = [];
+  drawApprox(); initPerf(); updateStats(); setButtons();
+  return true;
+}
+
+function tick() {
+  if (!running) return;
+  const delay = +$('delay').value;
+  const batch = delay === 0 ? Math.max(1, Math.min(tr.show, tr.fcn === 'trainlm' ? 2 : 25)) : 1;
+  let snap = false;
+  for (let k = 0; k < batch && !tr.stop; k++) {
+    tr.step();
+    if (tr.epoch % tr.show === 0 || tr.stop) { snap = true; break; }
+  }
+  if (snap) { drawApprox(); extendPerf(true); } else extendPerf(false);
+  updateStats();
+  if (tr.stop) { running = false; setButtons(); updateStats(); return; }
+  timer = delay === 0 ? requestAnimationFrame(tick) : setTimeout(tick, delay);
+}
+function start() {
+  if (!tr || tr.stop) { if (!reset()) return; }
+  const p = readParams();
+  if (!p) return;
+  // параметры, которые можно менять «на лету»
+  if (tr.fcn !== 'traingdx') tr.lr = p.lr;
+  tr.goal = p.goal; tr.epochs = p.epochs; tr.show = p.show;
+  if (tr.check()) { updateStats(); setButtons(); return; }
+  running = true; setButtons(); updateStats(); tick();
+}
+function stop() {
+  running = false;
+  if (timer) { clearTimeout(timer); cancelAnimationFrame(timer); timer = null; }
+  if (tr) updateStats();
+  setButtons();
+}
+
+function onVariant() {
+  const vi = +$('variant').value;
+  makeData(vi);
+  $('formula').textContent = variantText(VARIANTS[vi]);
+  $('gridInfo').textContent = `t = −${VARIANTS[vi].r} : 0.1 : ${VARIANTS[vi].r} → ${D.N} точек`;
+  $('seriesCard').classList.add('hidden');
+  reset();
+}
+
+function runSeries() {
+  const p = readParams();
+  if (!p) return;
+  stop();
+  const btn = $('series');
+  btn.disabled = true; btn.textContent = 'Считаю…';
+  setTimeout(() => {
+    const rows = [], traces = [{
+      x: D.t, y: D.y, mode: 'markers', name: 'f(t)', marker: { color: css('--points'), size: 5, opacity: 0.6 },
+    }];
+    SERIES_S.forEach((S, i) => {
+      const t0 = performance.now();
+      const T = new Trainer(Object.assign({}, p, { S }));
+      while (!T.stop) T.step();
+      const yh = T.predictDense();
+      let te = 0; yh.forEach((v, k) => { te += (v - D.yd[k]) ** 2; }); te /= yh.length;
+      rows.push({ S, P: 3 * S + 1, mse: T.perf[T.perf.length - 1], te, ep: T.epoch, stop: T.stop, ms: performance.now() - t0 });
+      traces.push({ x: D.td, y: yh, mode: 'lines', name: `S = ${S}`, line: { color: SERIES_COLORS[i], width: 2 },
+        hovertemplate: `S = ${S}<br>` + 't = %{x:.2f}<br>ŷ = %{y:.3f}<extra></extra>' });
+    });
+    $('seriesSub').textContent = `${p.fcn}, lr = ${p.fcn === 'trainlm' ? '—' : p.lr}, epochs = ${p.epochs}, goal = ${p.goal}, seed = ${p.seed}`;
+    $('seriesTable').innerHTML = '<tr><th>S</th><th>параметров</th><th>MSE (обучение)</th><th>MSE (контроль, шаг ≈0.025)</th><th>эпох</th><th>останов</th><th>время, мс</th></tr>' +
+      rows.map(r => `<tr><td>${r.S}</td><td>${r.P}</td><td>${fmt(r.mse)}</td><td>${fmt(r.te)}</td><td>${r.ep}</td>` +
+        `<td class="${r.stop === 'goal' ? 'ok' : 'no'}">${STOP_TEXT[r.stop][0]}</td><td>${r.ms.toFixed(0)}</td></tr>`).join('');
+    $('seriesCard').classList.remove('hidden');
+    Plotly.react('plotSeries', traces, baseLayout({
+      xaxis: Object.assign(baseLayout().xaxis, { title: { text: 't' } }),
+      yaxis: Object.assign(baseLayout().yaxis, { title: { text: 'y' }, range: yRange() }),
+      legend: { orientation: 'h', x: 0, y: -0.16 },
+    }), CFG);
+    btn.disabled = false; btn.textContent = 'Серия S = 1, 2, 5, 10, 20, 30';
+    $('seriesCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 30);
+}
+
+// ---------------- события ----------------
+$('neurons').addEventListener('input', e => { $('neuronsOut').textContent = e.target.value; reset(); });
+$('delay').addEventListener('input', e => { $('delayOut').textContent = e.target.value; });
+$('variant').addEventListener('change', onVariant);
+$('algo').addEventListener('change', reset);
+$('seed').addEventListener('change', reset);
+$('reseed').addEventListener('click', () => { $('seed').value = Math.floor(Math.random() * 10000); reset(); });
+['lr', 'goal', 'epochs', 'show'].forEach(id => $(id).addEventListener('change', () => {
+  const p = readParams();
+  if (!p || !tr) return;
+  if (tr.epoch === 0 && !running) reset(); else { setButtons(); }
+}));
+$('start').addEventListener('click', start);
+$('pause').addEventListener('click', stop);
+$('reset').addEventListener('click', reset);
+$('series').addEventListener('click', runSeries);
+$('trail').addEventListener('change', () => { if (tr) { trail.pop(); drawApprox(); } });
+$('showNeurons').addEventListener('change', e => {
+  $('neuronsCard').classList.toggle('hidden', !e.target.checked);
+  if (e.target.checked && tr) drawNeurons();
+});
+document.addEventListener('keydown', e => {
+  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName) && document.activeElement.type !== 'range' && document.activeElement.type !== 'checkbox') return;
+  if (e.code === 'Space') { e.preventDefault(); running ? stop() : start(); }
+  if (e.code === 'KeyR') reset();
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (!tr) return;
+  trail.pop(); drawApprox(); initPerf(); extendPerf(false);
+});
+
+onVariant();
+// #demo — автозапуск с ускоренной анимацией (для скриншотов и демонстрации)
+if (location.hash === '#demo') {
+  $('showNeurons').click();
+  $('delay').value = 0; $('delayOut').textContent = '0';
+  start();
+}
+</script>
+</body>
+</html>

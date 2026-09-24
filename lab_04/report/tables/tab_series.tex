@@ -1,0 +1,20 @@
+\begin{table}[H]
+\caption{Серия экспериментов (правило gauss, 200 эпох, 10 запусков)}
+\label{tab:series}
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+Конфигурация & Нейронов & QE & TE & Мёртвых & ARI \\
+\midrule
+1$\times$4 gridtop & 4 & 0.1573 $\pm$ 0.0001 & 0.241 $\pm$ 0.036 & 0.0 & 1.000 \\
+1$\times$4 hextop & 4 & 0.1573 $\pm$ 0.0001 & 0.241 $\pm$ 0.036 & 0.0 & 1.000 \\
+2$\times$2 gridtop & 4 & 0.1573 $\pm$ 0.0000 & 0.000 $\pm$ 0.000 & 0.0 & 1.000 \\
+2$\times$2 hextop & 4 & 0.1574 $\pm$ 0.0001 & 0.000 $\pm$ 0.000 & 0.0 & 1.000 \\
+3$\times$3 gridtop & 9 & 0.1346 $\pm$ 0.0005 & 0.017 $\pm$ 0.008 & 1.0 & 1.000 \\
+3$\times$3 hextop & 9 & 0.1344 $\pm$ 0.0031 & 0.000 $\pm$ 0.000 & 0.0 & 1.000 \\
+5$\times$5 gridtop & 25 & 0.0765 $\pm$ 0.0010 & 0.108 $\pm$ 0.011 & 3.7 & 1.000 \\
+5$\times$5 hextop & 25 & 0.0763 $\pm$ 0.0009 & 0.022 $\pm$ 0.014 & 2.9 & 1.000 \\
+\bottomrule
+\end{tabular}
+\end{table}

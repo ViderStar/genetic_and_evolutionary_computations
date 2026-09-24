@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тренажёр карты Кохонена</title>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@3.1.0/plotly.min.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f5f4f0; --surface: #fcfcfb; --surface-2: #f0efec; --ink: #0b0b0b; --ink-2: #52514e;
+    --muted: #898781; --grid: #e1e0d9; --axis: #c3c2b7; --border: rgba(11,11,11,0.10);
+    --accent: #2a78d6; --accent-ink: #fff; --neuron: #0b0b0b; --edge: #52514e;
+    --good: #0ca30c; --warn: #b87900; --bad: #d03b3b;
+    --c1: #2a78d6; --c2: #eb6834; --c3: #1baf7a; --c4: #eda100;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d; --surface: #1a1a19; --surface-2: #242422; --ink: #fff; --ink-2: #c3c2b7;
+      --muted: #898781; --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+      --accent: #3987e5; --neuron: #ffffff; --edge: #c3c2b7; --warn: #fab219; --bad: #e66767;
+      --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --surface-2: #242422; --ink: #fff; --ink-2: #c3c2b7;
+    --muted: #898781; --grid: #2c2c2a; --axis: #383835; --border: rgba(255,255,255,0.10);
+    --accent: #3987e5; --neuron: #ffffff; --edge: #c3c2b7; --warn: #fab219; --bad: #e66767;
+    --c1: #3987e5; --c2: #d95926; --c3: #199e70; --c4: #c98500; --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
+  header { padding: 20px 24px 8px; max-width: 1480px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+  header p { margin: 4px 0 0; color: var(--ink-2); }
+  .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 16px; max-width: 1480px; margin: 0 auto; padding: 12px 24px 32px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); }
+  aside.card { padding: 16px; align-self: start; position: sticky; top: 12px; }
+  .group { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .group:first-child { padding-top: 0; }
+  .group:last-child { border-bottom: 0; padding-bottom: 0; }
+  .group h2 { margin: 0 0 10px; font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  label { display: block; color: var(--ink-2); font-size: 13px; margin: 10px 0 4px; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .row output { min-width: 44px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; color: var(--ink); }
+  input[type=range] { flex: 1; accent-color: var(--accent); }
+  select, input[type=number] { width: 100%; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--axis); background: var(--surface); color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
+  input.invalid { border-color: var(--bad); outline: 1px solid var(--bad); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--axis); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; border-radius: 0; padding: 7px 6px; font-weight: 600; background: var(--surface); }
+  .seg button + button { border-left: 1px solid var(--axis); }
+  .seg button.on { background: var(--accent); color: var(--accent-ink); }
+  .sizes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .sizes button { padding: 7px 0; font-variant-numeric: tabular-nums; }
+  .sizes button.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 3px; min-height: 16px; }
+  .hint.err { color: var(--bad); }
+  .buttons { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; }
+  button { font: inherit; font-weight: 600; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--axis); background: var(--surface); color: var(--ink); cursor: pointer; transition: background .15s; }
+  button:hover { background: var(--surface-2); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  button.primary:hover { filter: brightness(1.07); background: var(--accent); }
+  button:disabled { opacity: .45; cursor: default; }
+  .check { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--ink-2); font-size: 13px; cursor: pointer; }
+  .check input { accent-color: var(--accent); }
+  main { display: grid; gap: 16px; min-width: 0; align-content: start; }
+  .stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+  .stat { padding: 12px 14px; }
+  .stat .k { color: var(--muted); font-size: 12px; }
+  .stat .v { font-size: 22px; font-weight: 650; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+  .stat .v small { font-size: 13px; color: var(--ink-2); font-weight: 500; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 14px !important; font-weight: 600; }
+  .chip::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+  .chip.run::before { background: var(--accent); animation: pulse 1s infinite; }
+  .chip.ok::before { background: var(--good); }
+  @keyframes pulse { 50% { opacity: .3; } }
+  .plots { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; }
+  .plot-card { padding: 12px 12px 4px; min-width: 0; }
+  .plot-card h3 { margin: 2px 6px 0; font-size: 15px; font-weight: 650; }
+  .plot-card .sub { margin: 0 6px; color: var(--muted); font-size: 12px; }
+  #plotMap { width: 100%; aspect-ratio: 1 / 1; max-height: 680px; }
+  .side { display: grid; gap: 16px; align-content: start; }
+  .plot { width: 100%; height: 300px; }
+  .kbd { font: 11px ui-monospace, Menlo, monospace; border: 1px solid var(--axis); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--ink-2); }
+  footer { max-width: 1480px; margin: 0 auto; padding: 0 24px 28px; color: var(--muted); font-size: 12px; }
+  @media (max-width: 1150px) { .layout { grid-template-columns: 1fr; } aside.card { position: static; } .plots { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { header { padding: 16px 16px 4px; } .layout { padding: 12px 16px 24px; } .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Кластеризация сетью Кохонена</h1>
+  <p>Лабораторная работа №4 · самоорганизующаяся карта (SOM): конкуренция «победитель получает всё» и кооперация соседей по решётке</p>
+</header>
+
+<div class="layout">
+  <aside class="card">
+    <div class="group">
+      <h2>Выборка</h2>
+      <label for="variant">Вариант</label>
+      <select id="variant"></select>
+      <div class="hint" id="centersInfo"></div>
+      <label for="spread">Разброс точек, σ</label>
+      <div class="row"><input type="range" id="spread" min="0.10" max="0.15" step="0.005" value="0.12"><output id="spreadOut">0.120</output></div>
+      <div class="grid2">
+        <div><label for="dataSeed">seed выборки</label><input type="number" id="dataSeed" value="3" min="0" step="1"></div>
+        <div><label>&nbsp;</label><button id="newData" style="width:100%">Новая выборка</button></div>
+      </div>
+      <div class="hint">30–50 точек в каждом кластере.</div>
+    </div>
+
+    <div class="group">
+      <h2>Сеть</h2>
+      <label>Топология слоя</label>
+      <div class="seg" id="topology">
+        <button data-v="hextop" class="on">hextop</button>
+        <button data-v="gridtop">gridtop</button>
+      </div>
+      <label>Размер сетки</label>
+      <div class="sizes" id="sizes">
+        <button data-r="1" data-c="4">1×4</button>
+        <button data-r="2" data-c="2">2×2</button>
+        <button data-r="3" data-c="3">3×3</button>
+        <button data-r="4" data-c="4">4×4</button>
+        <button data-r="5" data-c="5" class="on">5×5</button>
+      </div>
+      <div class="grid2">
+        <div><label for="rows">рядов</label><input type="number" id="rows" value="5" min="1" max="10"></div>
+        <div><label for="cols">столбцов</label><input type="number" id="cols" value="5" min="1" max="10"></div>
+      </div>
+      <label for="rule">Правило обучения</label>
+      <select id="rule">
+        <option value="gauss" selected>Кохонен, гауссова окрестность</option>
+        <option value="newsom1">newsom (MATLAB), tune_nd = 1</option>
+        <option value="newsom0">newsom, tune_nd = 0</option>
+      </select>
+      <div class="grid2">
+        <div>
+          <label for="init">Инициализация</label>
+          <select id="init"><option value="random" selected>случайная</option><option value="midpoint">в центре</option></select>
+        </div>
+        <div><label for="seed">seed весов</label><input type="number" id="seed" value="0" min="0" step="1"></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>Обучение и мультипликация</h2>
+      <div class="grid2">
+        <div><label for="epochs">Эпох (Epochs)</label><input type="number" id="epochs" value="200" min="1" max="5000"></div>
+        <div><label for="show">Перерисовка, эпох</label><input type="number" id="show" value="10" min="1" max="100"></div>
+      </div>
+      <div class="hint" id="paramHint"></div>
+      <label for="delay">Задержка (мс)</label>
+      <div class="row"><input type="range" id="delay" min="0" max="500" step="5" value="60"><output id="delayOut">60</output></div>
+      <div class="hint">Пауза между эпохами. 0 — максимальная скорость.</div>
+      <div class="buttons" style="margin-top:10px">
+        <button class="primary" id="start">▶ Старт</button>
+        <button id="pause" disabled>⏸ Пауза</button>
+        <button id="reset">⟲ Сброс</button>
+      </div>
+      <label class="check"><input type="checkbox" id="regions"> Области нейронов (цвет точки = её нейрон)</label>
+      <label class="check"><input type="checkbox" id="hitsSize" checked> Размер нейрона ∝ числу его точек</label>
+      <div class="hint" style="margin-top:8px"><span class="kbd">Пробел</span> — старт/пауза, <span class="kbd">R</span> — сброс</div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="stats">
+      <div class="card stat"><div class="k">Эпоха</div><div class="v" id="stEpoch">0</div></div>
+      <div class="card stat"><div class="k">Скорость η</div><div class="v" id="stLr">—</div></div>
+      <div class="card stat"><div class="k">Радиус окрестности</div><div class="v" id="stRad">—</div></div>
+      <div class="card stat"><div class="k">Квантиз. ошибка QE</div><div class="v" id="stQe">—</div></div>
+      <div class="card stat"><div class="k">Топогр. ошибка TE</div><div class="v" id="stTe">—</div></div>
+      <div class="card stat"><div class="k">Состояние</div><div class="v"><span class="chip" id="stState">готово</span></div></div>
+    </div>
+    <div class="plots">
+      <div class="card plot-card">
+        <h3>Плоскость [−1; 1]²</h3>
+        <div class="sub" id="mapSub">точки выборки и веса нейронов, соединённые связями топологической сетки</div>
+        <div id="plotMap"></div>
+      </div>
+      <div class="side">
+        <div class="card plot-card">
+          <h3>Ошибки карты по эпохам</h3>
+          <div class="sub">QE — среднее расстояние точки до своего нейрона; TE — доля точек, чьи 1-й и 2-й нейроны не соседи</div>
+          <div id="plotErr" class="plot"></div>
+        </div>
+        <div class="card plot-card">
+          <h3>Точек на нейрон</h3>
+          <div class="sub" id="hitsSub">нейроны на решётке; пустые — «мёртвые» (интерполирующие)</div>
+          <div id="plotHits" class="plot"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+<footer>Карта Кохонена реализована на JavaScript без библиотек машинного обучения: топологии hextop / gridtop, расстояние linkdist, правило learnsom (newsom) и гауссова окрестность.</footer>
+
+<script>
+'use strict';
+const VARIANTS = [
+  [[-0.5, 0.5], [0.5, 0.5], [0.0, -0.6]],
+  [[-0.6, -0.4], [0.6, -0.4], [0.0, 0.7]],
+  [[-0.5, 0.5], [0.5, 0.5], [-0.5, -0.5], [0.5, -0.5]],
+  [[-0.7, 0.0], [0.7, 0.0], [0.0, 0.7], [0.0, -0.7]],
+  [[-0.3, 0.3], [0.4, -0.4], [-0.6, -0.6]],
+  [[-0.6, 0.6], [0.6, 0.6], [0.0, 0.0], [0.0, -0.7]],
+  [[-0.5, -0.5], [0.5, 0.5], [-0.7, 0.6]],
+  [[-0.4, 0.4], [0.4, 0.4], [0.0, -0.2], [0.6, -0.6]],
+  [[-0.6, 0.0], [0.0, 0.6], [0.6, -0.6]],
+  [[-0.5, 0.0], [0.5, 0.0], [-0.5, 0.6], [0.5, -0.6]],
+];
+const SYMBOLS = ['circle', 'square', 'diamond', 'triangle-up'];
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const clusterColors = () => [css('--c1'), css('--c2'), css('--c3'), css('--c4')];
+
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function gaussian(rnd) {
+  let u = 0, v = 0;
+  while (u === 0) u = rnd();
+  while (v === 0) v = rnd();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+// ---------- данные ----------
+let X = [], Y = [];
+function makeData() {
+  const centers = VARIANTS[+$('variant').value];
+  const rnd = mulberry32(+$('dataSeed').value * 9973 + 11);
+  const s = +$('spread').value;
+  X = []; Y = [];
+  centers.forEach((c, k) => {
+    const n = 30 + Math.floor(rnd() * 21);
+    for (let i = 0; i < n; i++) {
+      X.push([Math.max(-1, Math.min(1, c[0] + s * gaussian(rnd))), Math.max(-1, Math.min(1, c[1] + s * gaussian(rnd)))]);
+      Y.push(k);
+    }
+  });
+  $('centersInfo').textContent = `${centers.length} кластера: ` + centers.map(c => `(${c[0]}; ${c[1]})`).join(', ') + ` · всего ${X.length} точек`;
+}
+
+// ---------- карта Кохонена ----------
+class SOM {
+  constructor(rows, cols, topology, rule, init, seed) {
+    Object.assign(this, { rows, cols, topology, rule, init });
+    this.rnd = mulberry32(seed * 7919 + 101);
+    this.n = rows * cols;
+    this.pos = [];
+    for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++)
+      this.pos.push(topology === 'hextop' ? [j + 0.5 * (i % 2), i * Math.sqrt(3) / 2] : [j, i]);
+    const n = this.n;
+    this.gd = this.pos.map(a => this.pos.map(b => Math.hypot(a[0] - b[0], a[1] - b[1])));
+    this.adj = this.gd.map(r => r.map(d => d > 0 && d < 1.01));
+    // linkdist — BFS по связям
+    this.link = this.adj.map((_, s) => {
+      const d = new Array(n).fill(Infinity); d[s] = 0; const q = [s];
+      while (q.length) { const u = q.shift(); for (let v = 0; v < n; v++) if (this.adj[u][v] && d[v] === Infinity) { d[v] = d[u] + 1; q.push(v); } }
+      return d;
+    });
+    this.maxLink = Math.max(...this.link.flat().filter(isFinite));
+    this.maxGd = Math.max(...this.gd.flat());
+    this.edges = [];
+    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) if (this.adj[a][b]) this.edges.push([a, b]);
+    if (init === 'random') this.W = Array.from({ length: n }, () => [this.rnd() * 2 - 1, this.rnd() * 2 - 1]);
+    else {
+      const m = [0, 0]; X.forEach(p => { m[0] += p[0] / X.length; m[1] += p[1] / X.length; });
+      this.W = Array.from({ length: n }, () => [m[0] + (this.rnd() - 0.5) * 2e-3, m[1] + (this.rnd() - 0.5) * 2e-3]);
+    }
+    this.epoch = 0;
+  }
+  schedule(ep, epochs) {
+    if (this.rule === 'gauss') {
+      const f = ep / Math.max(epochs - 1, 1), s0 = Math.max(this.maxGd / 2, 1);
+      return [0.5 * Math.pow(0.01 / 0.5, f), s0 * Math.pow(0.3 / s0, f)];
+    }
+    const tune = this.rule === 'newsom1' ? 1 : 0, order = Math.max(Math.floor(epochs / 2), 1);
+    if (ep < order) { const f = ep / order; return [0.9 + (0.02 - 0.9) * f, this.maxLink + (tune - this.maxLink) * f]; }
+    return [0.02 * order / ep, tune];
+  }
+  bmu(p) {
+    let best = 0, bd = Infinity;
+    for (let j = 0; j < this.n; j++) { const d = (this.W[j][0] - p[0]) ** 2 + (this.W[j][1] - p[1]) ** 2; if (d < bd) { bd = d; best = j; } }
+    return best;
+  }
+  step(epochs) {
+    const [lr, rad] = this.schedule(this.epoch, epochs);
+    this.lr = lr; this.rad = rad;
+    const idx = X.map((_, i) => i);
+    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(this.rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    for (const i of idx) {
+      const p = X[i], c = this.bmu(p);
+      for (let j = 0; j < this.n; j++) {
+        let h;
+        if (this.rule === 'gauss') h = Math.exp(-(this.gd[c][j] ** 2) / (2 * rad * rad));
+        else h = j === c ? 1 : (this.link[c][j] <= rad + 1e-9 ? 0.5 : 0);
+        if (h < 1e-6) continue;
+        this.W[j][0] += lr * h * (p[0] - this.W[j][0]);
+        this.W[j][1] += lr * h * (p[1] - this.W[j][1]);
+      }
+    }
+    this.epoch++;
+  }
+  metrics() {
+    let qe = 0, te = 0; const hits = new Array(this.n).fill(0), win = [];
+    for (const p of X) {
+      let b1 = -1, b2 = -1, d1 = Infinity, d2 = Infinity;
+      for (let j = 0; j < this.n; j++) {
+        const d = (this.W[j][0] - p[0]) ** 2 + (this.W[j][1] - p[1]) ** 2;
+        if (d < d1) { d2 = d1; b2 = b1; d1 = d; b1 = j; } else if (d < d2) { d2 = d; b2 = j; }
+      }
+      qe += Math.sqrt(d1); hits[b1]++; win.push(b1);
+      if (b2 >= 0 && !this.adj[b1][b2]) te++;
+    }
+    return { qe: qe / X.length, te: this.n > 1 ? te / X.length : 0, hits, win, dead: hits.filter(h => h === 0).length };
+  }
+}
+
+// ---------- UI ----------
+let som = null, running = false, timer = null, hist = { ep: [], qe: [], te: [] };
+VARIANTS.forEach((v, i) => $('variant').add(new Option(`Вариант ${i + 1}`, i)));
+$('variant').value = 2;
+const topo = () => document.querySelector('#topology .on').dataset.v;
+
+function params() {
+  const r = Math.round(+$('rows').value), c = Math.round(+$('cols').value);
+  const ep = Math.round(+$('epochs').value), sh = Math.round(+$('show').value);
+  const okR = r >= 1 && r <= 10, okC = c >= 1 && c <= 10, okE = ep >= 1 && ep <= 5000, okS = sh >= 1;
+  const okN = r * c >= 2;
+  $('rows').classList.toggle('invalid', !okR || !okN); $('cols').classList.toggle('invalid', !okC || !okN);
+  $('epochs').classList.toggle('invalid', !okE); $('show').classList.toggle('invalid', !okS);
+  const errs = [];
+  if (!okR || !okC) errs.push('размер сетки: от 1 до 10');
+  if (!okN) errs.push('нужно хотя бы 2 нейрона');
+  if (!okE) errs.push('эпох: от 1 до 5000');
+  if (!okS) errs.push('перерисовка ≥ 1');
+  $('paramHint').textContent = errs.join('; ') || (sh < 10 || sh > 20 ? 'По методичке перерисовка каждые 10–20 эпох.' : '');
+  $('paramHint').classList.toggle('err', errs.length > 0);
+  return errs.length ? null : { r, c, ep, sh };
+}
+function fmt(v, d = 3) { return v === undefined || !isFinite(v) ? '—' : v.toFixed(d); }
+
+function baseLayout(extra) {
+  const ax = { gridcolor: css('--grid'), linecolor: css('--axis'), zeroline: false, ticks: 'outside', tickcolor: css('--axis') };
+  return Object.assign({
+    paper_bgcolor: css('--surface'), plot_bgcolor: css('--surface'),
+    font: { family: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif', size: 12, color: css('--ink-2') },
+    margin: { l: 48, r: 12, t: 12, b: 44 }, xaxis: ax, yaxis: Object.assign({}, ax),
+    hoverlabel: { bgcolor: css('--surface'), bordercolor: css('--axis'), font: { color: css('--ink') } },
+    legend: { orientation: 'h', x: 0, y: -0.1, font: { size: 12, color: css('--ink-2') } },
+  }, extra);
+}
+const CFG = { displaylogo: false, responsive: true, modeBarButtonsToRemove: ['lasso2d', 'select2d'] };
+
+function drawMap() {
+  const m = som.metrics(), cols = clusterColors(), K = Math.max(...Y) + 1;
+  const regions = $('regions').checked;
+  const regionPal = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'];
+  const traces = [];
+  for (let k = 0; k < K; k++) {
+    const idx = Y.map((y, i) => y === k ? i : -1).filter(i => i >= 0);
+    traces.push({
+      x: idx.map(i => X[i][0]), y: idx.map(i => X[i][1]), mode: 'markers', name: `кластер ${k + 1}`,
+      marker: { symbol: SYMBOLS[k % 4], size: 7, opacity: 0.75, line: { color: css('--surface'), width: 1 },
+        color: regions ? idx.map(i => regionPal[m.win[i] % 8]) : cols[k] },
+      hovertemplate: `кластер ${k + 1}<br>` + '(%{x:.3f}; %{y:.3f})<extra></extra>',
+    });
+  }
+  const ex = [], ey = [];
+  som.edges.forEach(([a, b]) => { ex.push(som.W[a][0], som.W[b][0], null); ey.push(som.W[a][1], som.W[b][1], null); });
+  traces.push({ x: ex, y: ey, mode: 'lines', name: 'связи сетки', line: { color: css('--edge'), width: 2 }, hoverinfo: 'skip' });
+  const maxH = Math.max(...m.hits, 1);
+  traces.push({
+    x: som.W.map(w => w[0]), y: som.W.map(w => w[1]), mode: 'markers', name: 'нейроны (веса)',
+    marker: { color: css('--neuron'), line: { color: css('--surface'), width: 2 },
+      size: $('hitsSize').checked ? m.hits.map(h => 8 + 10 * Math.sqrt(h / maxH)) : 12,
+      symbol: m.hits.map(h => h ? 'circle' : 'circle-open') },
+    customdata: som.W.map((_, j) => [j + 1, m.hits[j]]),
+    hovertemplate: 'нейрон %{customdata[0]}<br>w = (%{x:.3f}; %{y:.3f})<br>точек: %{customdata[1]}<extra></extra>',
+  });
+  Plotly.react('plotMap', traces, baseLayout({
+    xaxis: Object.assign(baseLayout().xaxis, { range: [-1.05, 1.05], dtick: 0.5, title: { text: 'x₁' }, constrain: 'domain' }),
+    yaxis: Object.assign(baseLayout().yaxis, { range: [-1.05, 1.05], dtick: 0.5, title: { text: 'x₂' }, scaleanchor: 'x' }),
+    margin: { l: 48, r: 12, t: 12, b: 70 }, hovermode: 'closest',
+  }), CFG);
+  drawHits(m);
+  return m;
+}
+function drawHits(m) {
+  const sym = som.topology === 'hextop' ? 'hexagon' : 'square';
+  const span = Math.max(som.cols, som.rows);
+  Plotly.react('plotHits', [{
+    x: som.pos.map(p => p[0]), y: som.pos.map(p => p[1]), mode: 'markers+text',
+    text: m.hits.map(h => h ? String(h) : '·'), textfont: { color: css('--ink'), size: span > 6 ? 9 : 12 },
+    marker: { symbol: sym, size: Math.max(14, 190 / span), color: m.hits,
+      colorscale: [[0, css('--surface-2')], [0.001, '#cde2fb'], [1, '#184f95']], line: { color: css('--surface'), width: 2 } },
+    hovertemplate: 'точек: %{text}<extra></extra>',
+  }], baseLayout({
+    xaxis: { visible: false, range: [-0.8, som.cols + 0.3] },
+    yaxis: { visible: false, range: [-0.8, (som.rows - 1) * (som.topology === 'hextop' ? 0.866 : 1) + 0.8], scaleanchor: 'x' },
+    margin: { l: 8, r: 8, t: 8, b: 8 }, showlegend: false,
+  }), CFG);
+  $('hitsSub').textContent = `нейроны на решётке ${som.rows}×${som.cols} ${som.topology}; мёртвых (без точек): ${m.dead}`;
+}
+function drawErr() {
+  Plotly.react('plotErr', [
+    { x: hist.ep.slice(), y: hist.qe.slice(), mode: 'lines+markers', name: 'QE', line: { color: css('--c1'), width: 2 }, marker: { size: 6 } },
+    { x: hist.ep.slice(), y: hist.te.slice(), mode: 'lines+markers', name: 'TE', line: { color: css('--c2'), width: 2, dash: 'dot' }, marker: { size: 6, symbol: 'diamond' } },
+  ], baseLayout({
+    xaxis: Object.assign(baseLayout().xaxis, { title: { text: 'эпоха' }, range: [0, Math.max(+$('epochs').value, 1)] }),
+    yaxis: Object.assign(baseLayout().yaxis, { rangemode: 'tozero' }),
+    hovermode: 'x unified', legend: { orientation: 'h', x: 0, y: 1.12 }, margin: { l: 48, r: 12, t: 24, b: 44 },
+  }), CFG);
+}
+function updateStats(m) {
+  const p = params();
+  $('stEpoch').innerHTML = `${som.epoch} <small>/ ${p ? p.ep : '?'}</small>`;
+  $('stLr').textContent = fmt(som.lr); $('stRad').textContent = fmt(som.rad, 2);
+  if (m) { $('stQe').textContent = fmt(m.qe, 4); $('stTe').textContent = fmt(m.te, 3); }
+  const st = $('stState');
+  if (p && som.epoch >= p.ep) { st.textContent = 'завершено'; st.className = 'chip ok'; }
+  else if (running) { st.textContent = 'обучение'; st.className = 'chip run'; }
+  else { st.textContent = som.epoch ? 'пауза' : 'готово'; st.className = 'chip'; }
+  $('start').disabled = running || (p && som.epoch >= p.ep);
+  $('pause').disabled = !running;
+  $('start').textContent = '▶ Старт';
+}
+function record(m) { hist.ep.push(som.epoch); hist.qe.push(m.qe); hist.te.push(m.te); }
+
+function reset() {
+  stop();
+  const p = params();
+  if (!p) return;
+  som = new SOM(p.r, p.c, topo(), $('rule').value, $('init').value, +$('seed').value);
+  som.lr = som.schedule(0, p.ep)[0]; som.rad = som.schedule(0, p.ep)[1];
+  hist = { ep: [], qe: [], te: [] };
+  const m = drawMap(); record(m); drawErr(); updateStats(m);
+  document.querySelectorAll('#sizes button').forEach(b => b.classList.toggle('on', +b.dataset.r === p.r && +b.dataset.c === p.c));
+}
+function tick() {
+  if (!running) return;
+  const p = params();
+  if (!p) { stop(); return; }
+  const delay = +$('delay').value;
+  const batch = delay === 0 ? Math.min(p.sh, 5) : 1;
+  let m = null;
+  for (let k = 0; k < batch && som.epoch < p.ep; k++) {
+    som.step(p.ep);
+    if (som.epoch % p.sh === 0 || som.epoch === p.ep) { m = drawMap(); record(m); drawErr(); break; }
+  }
+  updateStats(m);
+  if (som.epoch >= p.ep) { running = false; updateStats(m); return; }
+  timer = delay === 0 ? requestAnimationFrame(tick) : setTimeout(tick, delay);
+}
+function start() {
+  if (!som || (params() && som.epoch >= params().ep)) reset();
+  if (!params()) return;
+  running = true; updateStats(); tick();
+}
+function stop() {
+  running = false;
+  if (timer) { clearTimeout(timer); cancelAnimationFrame(timer); timer = null; }
+  if (som) updateStats();
+}
+
+// ---------- события ----------
+document.querySelectorAll('#topology button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#topology button').forEach(x => x.classList.toggle('on', x === b)); reset();
+}));
+document.querySelectorAll('#sizes button').forEach(b => b.addEventListener('click', () => {
+  $('rows').value = b.dataset.r; $('cols').value = b.dataset.c; reset();
+}));
+['rows', 'cols', 'rule', 'init', 'seed', 'epochs', 'show'].forEach(id => $(id).addEventListener('change', reset));
+$('variant').addEventListener('change', () => { makeData(); reset(); });
+$('spread').addEventListener('input', e => { $('spreadOut').textContent = (+e.target.value).toFixed(3); });
+$('spread').addEventListener('change', () => { makeData(); reset(); });
+$('dataSeed').addEventListener('change', () => { makeData(); reset(); });
+$('newData').addEventListener('click', () => { $('dataSeed').value = Math.floor(Math.random() * 10000); makeData(); reset(); });
+$('delay').addEventListener('input', e => { $('delayOut').textContent = e.target.value; });
+$('start').addEventListener('click', start);
+$('pause').addEventListener('click', stop);
+$('reset').addEventListener('click', reset);
+['regions', 'hitsSize'].forEach(id => $(id).addEventListener('change', () => som && drawMap()));
+document.addEventListener('keydown', e => {
+  const t = document.activeElement;
+  if (['INPUT', 'SELECT'].includes(t.tagName) && !['range', 'checkbox'].includes(t.type)) return;
+  if (e.code === 'Space') { e.preventDefault(); running ? stop() : start(); }
+  if (e.code === 'KeyR') reset();
+});
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (som) { drawMap(); drawErr(); } });
+
+makeData();
+reset();
+if (location.hash === '#demo') { $('delay').value = 0; $('delayOut').textContent = '0'; start(); }
+</script>
+</body>
+</html>

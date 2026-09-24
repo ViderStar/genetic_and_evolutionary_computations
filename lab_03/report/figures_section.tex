@@ -1,31 +1,101 @@
 \section{Иллюстрации результатов}
 
-Ниже приведены основные визуализации, полученные в ходе выполнения лабораторной работы.
+Ниже приведены основные визуализации, полученные в ходе выполнения лабораторной работы. Интерактивные версии графиков находятся в каталоге \texttt{outputs/}.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{target_function.png}
-\caption{Целевая функция, выбранная для аппроксимации.}
-\label{fig:lab_03_fig_1}
+\includegraphics[width=\textwidth]{01_target_function.png}
+\caption{Функция варианта~3 и обучающие точки с шагом 0,1.}
+\label{fig:target}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{training_loss.png}
-\caption{Динамика функции потерь в процессе обучения сети.}
-\label{fig:lab_03_fig_2}
+\includegraphics[width=\textwidth]{02_training_animation.png}
+\caption{Мультипликация обучения traingd ($S = 10$): финальный кадр. Интерактивная версия с кнопками <<Старт>>, <<Пауза>>, <<Сброс>>~--- \texttt{outputs/02\_training\_animation.html}.}
+\label{fig:anim}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{approximation_20neurons.png}
-\caption{Результат аппроксимации функции при 20 нейронах скрытого слоя.}
-\label{fig:lab_03_fig_3}
+\includegraphics[width=\textwidth]{03_training_snapshots.png}
+\caption{Изгибание кривой аппроксимации в ходе обучения traingd ($S = 10$).}
+\label{fig:snapshots}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.95\textwidth]{approximation_comparison.png}
-\caption{Сравнение качества аппроксимации при разном числе скрытых нейронов.}
-\label{fig:lab_03_fig_4}
+\includegraphics[width=\textwidth]{04_series_approximations.png}
+\caption{Аппроксимация при $S = 1, 2, 5, 10, 20, 30$ (traingd, $\eta = 0{,}05$, 600 эпох, типичный запуск).}
+\label{fig:series}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{05_series_performance.png}
+\caption{Кривые ошибки traingd при разном числе нейронов.}
+\label{fig:seriesperf}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{06_series_mse_spread.png}
+\caption{Разброс итоговой MSE по 10 инициализациям.}
+\label{fig:spread}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{07_algorithms_convergence.png}
+\caption{Скорость сходимости traingd, traingdx и trainlm при $S = 10$.}
+\label{fig:algos}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{08_capacity_curve.png}
+\caption{Точность аппроксимации в зависимости от числа нейронов скрытого слоя.}
+\label{fig:capacity}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{09_well_trained_models.png}
+\caption{Сети, обученные trainlm до сходимости.}
+\label{fig:welltrained}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{10_neuron_contributions.png}
+\caption{Выход сети как сумма вкладов нейронов скрытого слоя ($S = 3$ и $S = 5$).}
+\label{fig:contrib}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{11_learning_rate.png}
+\caption{Влияние коэффициента обучения на траекторию ошибки traingd ($S = 10$).}
+\label{fig:lr}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{12_under_overfitting.png}
+\caption{Недообучение и переобучение на зашумлённых данных.}
+\label{fig:overfit}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{13_bias_variance.png}
+\caption{Ошибка на обучающих точках и относительно истинной функции в зависимости от $S$.}
+\label{fig:bv}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{00_app_screenshot.png}
+\caption{Интерактивное приложение \texttt{app/nn\_trainer.html}.}
+\label{fig:app}
 \end{figure}

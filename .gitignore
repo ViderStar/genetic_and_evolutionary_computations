@@ -35,3 +35,9 @@ data/*.xlsx
 *.out
 *.synctex.gz
 *.toc
+
+# LaTeX misc
+missfont.log
+
+# Статья для конференции OSTIS — хранится локально, не в этом репозитории
+ostis/

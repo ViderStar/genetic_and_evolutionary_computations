@@ -1,0 +1,20 @@
+\begin{table}[H]
+\caption{Предельная точность сети с $S$ нейронами (trainlm, лучший из 10 запусков)}
+\label{tab:capacity}
+\centering
+\small
+\begin{tabular}{cccc}
+\toprule
+$S$ & MSE обучение & MSE контроль & max$|e|$ \\
+\midrule
+1 & 1.5e+00 & 1.5e+00 & 2.2e+00 \\
+2 & 6.8e-01 & 6.8e-01 & 1.6e+00 \\
+3 & 9.3e-05 & 8.5e-05 & 4.4e-02 \\
+4 & 8.7e-06 & 8.3e-06 & 7.8e-03 \\
+5 & 7.3e-09 & 6.9e-09 & 2.9e-04 \\
+10 & 2.5e-09 & 2.2e-09 & 2.4e-04 \\
+20 & 9.7e-10 & 1.0e-09 & 1.4e-04 \\
+30 & 3.4e-10 & 4.7e-10 & 1.7e-04 \\
+\bottomrule
+\end{tabular}
+\end{table}
