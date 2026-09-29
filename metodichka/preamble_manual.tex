@@ -1,0 +1,222 @@
+% =============================================================
+% preamble_manual.tex — оформление учебно-методического пособия
+% Основа — latex/preamble.tex (СТП БГУИР 01-2024): A4, поля 30/15/20/20 мм,
+% Times 14 pt, одинарный интервал, абзацный отступ 1,25 см,
+% номер страницы внизу справа, заголовки разделов с новой страницы,
+% подписи «Рисунок 1.1 – ...» под рисунком и «Таблица 1.1 – ...» над таблицей.
+% =============================================================
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[russian]{babel}
+
+% Шрифт Times (текст и формулы)
+\usepackage{amsmath}
+\usepackage{tempora}
+\usepackage[varg]{newtxmath}
+\usepackage{icomma}          % десятичная запятая в формулах: $0,5$
+\usepackage{mathtools}
+
+% Поля и интервалы
+\usepackage{geometry}
+\geometry{left=30mm, right=15mm, top=20mm, bottom=20mm, footskip=10mm}
+\usepackage{setspace}
+\singlespacing
+\usepackage{indentfirst}
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0pt}
+\pretolerance=1000
+\tolerance=2000
+\emergencystretch=3em
+\clubpenalty=10000
+\widowpenalty=10000
+
+% Нумерация страниц: внизу справа
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[R]{\thepage}\renewcommand{\headrulewidth}{0pt}}
+
+% Графика, таблицы
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[table]{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{makecell}
+\usepackage{needspace}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, shapes.geometric, shapes.misc, fit, backgrounds, matrix}
+
+\definecolor{cblue}{HTML}{2A78D6}
+\definecolor{corange}{HTML}{EB6834}
+\definecolor{cgreen}{HTML}{1BAF7A}
+\definecolor{cyellow}{HTML}{EDA100}
+\definecolor{cgray}{HTML}{898781}
+\definecolor{clight}{HTML}{E1E0D9}
+
+% Подписи
+\usepackage{caption}
+\captionsetup[figure]{labelsep=endash, justification=centering, font=normalsize, name=Рисунок, skip=4pt}
+\captionsetup[table]{labelsep=endash, justification=raggedright, singlelinecheck=false,
+  font=normalsize, name=Таблица, skip=3pt}
+
+% Плавающие объекты
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.07}
+\renewcommand{\floatpagefraction}{0.85}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{4}
+\setlength{\textfloatsep}{10pt plus 3pt minus 3pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\abovedisplayskip}{6pt plus 2pt minus 2pt}
+\setlength{\belowdisplayskip}{6pt plus 2pt minus 2pt}
+\setlength{\abovedisplayshortskip}{4pt}
+\setlength{\belowdisplayshortskip}{4pt}
+
+% Заголовки: раздел с новой страницы, полужирный, прописные, с абзацного отступа
+\usepackage{titlesec}
+\newif\ifnosectionbreak
+\titleformat{\section}
+  {\ifnosectionbreak\global\nosectionbreakfalse\else\clearpage\fi\normalfont\fontsize{14}{17}\selectfont\bfseries\raggedright}
+  {\thesection}{0.5em}{\MakeUppercase}
+\titlespacing*{\section}{1.25cm}{0pt}{12pt}
+\titleformat{\subsection}
+  {\normalfont\fontsize{14}{17}\selectfont\bfseries\raggedright}{\thesubsection}{0.5em}{}
+\titlespacing*{\subsection}{1.25cm}{12pt}{8pt}
+\titleformat{\subsubsection}
+  {\normalfont\fontsize{14}{17}\selectfont\bfseries\raggedright}{\thesubsubsection}{0.5em}{}
+\titlespacing*{\subsubsection}{1.25cm}{10pt}{6pt}
+
+% Заголовок без номера по центру (введение, список источников)
+\newcommand{\sectioncenter}[1]{%
+  \clearpage\phantomsection\addcontentsline{toc}{section}{#1}%
+  \begin{center}\textbf{\MakeUppercase{#1}}\end{center}\vspace{6pt}}
+
+% Название части (теоретическая часть, практикум): следующий раздел идёт на той же странице
+\newcommand{\parttitle}[1]{%
+  \clearpage\phantomsection\addcontentsline{toc}{section}{\MakeUppercase{#1}}%
+  \begin{center}\fontsize{16}{20}\selectfont\bfseries\MakeUppercase{#1}\end{center}\vspace{8pt}%
+  \global\nosectionbreaktrue}
+
+% Лабораторная работа: номер раздела «Л1», рисунки «Л1.1»
+\newcommand{\labsection}[2]{%
+  \clearpage\refstepcounter{section}\phantomsection
+  \addcontentsline{toc}{section}{Лабораторная работа №\arabic{section}. #2}%
+  \begin{center}\bfseries ЛАБОРАТОРНАЯ РАБОТА №\arabic{section}\\[2pt]\MakeUppercase{#2}\end{center}\vspace{4pt}}
+% Рубрика внутри лабораторной работы
+\newcommand{\labpart}[1]{\par\addvspace{6pt}\noindent\hspace{1.25cm}\textbf{#1}\par\nobreak\vspace{3pt}\nobreak}
+
+% Приложение
+\newcommand{\appendixsection}[3]{%
+  \clearpage\refstepcounter{section}\phantomsection
+  \addcontentsline{toc}{section}{Приложение \thesection. #3}%
+  \begin{center}\textbf{ПРИЛОЖЕНИЕ \thesection}\\(#2)\\[2pt]\textbf{#3}\end{center}\vspace{6pt}}
+
+% Содержание
+\usepackage{tocloft}
+\renewcommand{\cftsecfont}{\normalfont}
+\renewcommand{\cftsecpagefont}{\normalfont}
+\renewcommand{\cftsubsecfont}{\normalfont}
+\renewcommand{\cftsubsecpagefont}{\normalfont}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cftdotsep}{1}
+\setlength{\cftbeforesecskip}{2pt}
+\setlength{\cftsecnumwidth}{1.6em}
+\setlength{\cftsubsecindent}{1.6em}
+\setlength{\cftsubsecnumwidth}{2.3em}
+\addto\captionsrussian{\renewcommand{\contentsname}{\hfill\textbf{СОДЕРЖАНИЕ}\hfill}}
+\renewcommand{\cftaftertoctitle}{\hfill}
+\setcounter{tocdepth}{2}
+
+% Списки: тире, без лишних интервалов
+\usepackage{enumitem}
+\setlist[itemize]{noitemsep, topsep=2pt, leftmargin=*, labelindent=1.25cm, label=--}
+\setlist[enumerate]{noitemsep, topsep=2pt, leftmargin=*, labelindent=1.25cm, label=\arabic*)}
+\newlist{steps}{enumerate}{1}
+\setlist[steps]{noitemsep, topsep=2pt, leftmargin=0pt, itemindent=1.25cm+1.5em, labelwidth=1.3em,
+  labelsep=0.4em, label=\arabic*.}
+\newlist{questions}{enumerate}{1}
+\setlist[questions]{noitemsep, topsep=2pt, leftmargin=0pt, itemindent=1.25cm+1.5em, labelwidth=1.3em,
+  labelsep=0.4em, label=\arabic*.}
+
+% Листинги
+\usepackage{listings}
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\fontsize{9}{10.8}\selectfont,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape\color{cgray},
+  frame=single, rulecolor=\color{clight},
+  breaklines=true, showstringspaces=false,
+  columns=fullflexible, keepspaces=true,
+  xleftmargin=2pt, xrightmargin=2pt,
+  inputencoding=utf8, extendedchars=true,
+  literate={а}{{\cyra}}1 {б}{{\cyrb}}1 {в}{{\cyrv}}1 {г}{{\cyrg}}1 {д}{{\cyrd}}1 {е}{{\cyre}}1
+           {ё}{{\cyryo}}1 {ж}{{\cyrzh}}1 {з}{{\cyrz}}1 {и}{{\cyri}}1 {й}{{\cyrishrt}}1 {к}{{\cyrk}}1
+           {л}{{\cyrl}}1 {м}{{\cyrm}}1 {н}{{\cyrn}}1 {о}{{\cyro}}1 {п}{{\cyrp}}1 {р}{{\cyrr}}1
+           {с}{{\cyrs}}1 {т}{{\cyrt}}1 {у}{{\cyru}}1 {ф}{{\cyrf}}1 {х}{{\cyrh}}1 {ц}{{\cyrc}}1
+           {ч}{{\cyrch}}1 {ш}{{\cyrsh}}1 {щ}{{\cyrshch}}1 {ъ}{{\cyrhrdsn}}1 {ы}{{\cyrery}}1
+           {ь}{{\cyrsftsn}}1 {э}{{\cyrerev}}1 {ю}{{\cyryu}}1 {я}{{\cyrya}}1
+           {А}{{\CYRA}}1 {Б}{{\CYRB}}1 {В}{{\CYRV}}1 {Г}{{\CYRG}}1 {Д}{{\CYRD}}1 {Е}{{\CYRE}}1
+           {Ж}{{\CYRZH}}1 {З}{{\CYRZ}}1 {И}{{\CYRI}}1 {К}{{\CYRK}}1 {Л}{{\CYRL}}1 {М}{{\CYRM}}1
+           {Н}{{\CYRN}}1 {О}{{\CYRO}}1 {П}{{\CYRP}}1 {Р}{{\CYRR}}1 {С}{{\CYRS}}1 {Т}{{\CYRT}}1
+           {У}{{\CYRU}}1 {Ф}{{\CYRF}}1 {Х}{{\CYRH}}1 {Ц}{{\CYRC}}1 {Ч}{{\CYRCH}}1 {Ш}{{\CYRSH}}1
+           {Э}{{\CYREREV}}1 {Ю}{{\CYRYU}}1 {Я}{{\CYRYA}}1 {—}{{---}}1 {→}{{$\to$}}1
+}
+
+% Ссылки
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=black, citecolor=black,
+  pdftitle={Генетические и эволюционные вычисления: нейронные сети и генетические алгоритмы},
+  pdfauthor={А. В. Лебедевич, С. Н. Нестеренков}}
+\usepackage{lastpage}
+
+% Нумерация рисунков, таблиц и формул в пределах раздела
+\numberwithin{figure}{section}
+\numberwithin{table}{section}
+\numberwithin{equation}{section}
+
+% Список источников: «1 Автор...» с абзацного отступа (ГОСТ 7.1)
+\makeatletter
+\renewcommand{\@biblabel}[1]{#1}
+\renewenvironment{thebibliography}[1]
+  {\sectioncenter{Список использованных источников}%
+   \list{\@biblabel{\@arabic\c@enumiv}}%
+     {\settowidth\labelwidth{\@biblabel{#1}}%
+      \setlength{\leftmargin}{0pt}\setlength{\itemindent}{1.25cm}%
+      \addtolength{\itemindent}{\labelwidth}\addtolength{\itemindent}{\labelsep}%
+      \setlength{\itemsep}{1pt}\setlength{\parsep}{0pt}%
+      \usecounter{enumiv}\let\p@enumiv\@empty\renewcommand\theenumiv{\@arabic\c@enumiv}}%
+   \sloppy}
+  {\endlist}
+\makeatother
+
+% Удобные обозначения
+\newcommand{\figdir}{figures}
+\newcommand{\labfig}[2]{../lab_0#1/report/figures/#2}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\bits}[1]{\texttt{#1}}
+\DeclareMathOperator{\dec}{dec}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+% Строка битов/генов в рамках (TikZ): \bitrow[x0]{y}{подпись}{0/white,1/cblue!20,...}
+\newlength{\bitw}\setlength{\bitw}{4.4mm}
+\newcommand{\bitrow}[4][0]{%
+  \node[anchor=east, font=\small] at (#1, #2) {#3};
+  \foreach \b/\c [count=\i] in {#4}{%
+    \node[draw, minimum size=\bitw, inner sep=0pt, fill=\c, font=\ttfamily\small]
+      at ($(#1, #2) + (\i*\bitw - 0.3\bitw, 0)$) {\b};}}
+% Вертикальная линия разреза после гена k: \cutline[x0]{k}{y_верх}{y_низ}
+\newcommand{\cutline}[4][0]{%
+  \draw[corange, very thick, densely dashed] ($(#1, #3) + (#2\bitw + 0.2\bitw, 0.35)$) --
+    ($(#1, #4) + (#2\bitw + 0.2\bitw, -0.35)$);}

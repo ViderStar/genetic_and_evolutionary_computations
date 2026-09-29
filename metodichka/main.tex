@@ -1,0 +1,51 @@
+% =============================================================
+% Учебно-методическое пособие
+% «Генетические и эволюционные вычисления: нейронные сети и генетические алгоритмы»
+% Сборка: latexmk -pdf main.tex (pdfLaTeX, TinyTeX)
+% =============================================================
+\documentclass[14pt,a4paper]{extarticle}
+\input{preamble_manual}
+
+\begin{document}
+
+\input{sections/00_title}
+
+\tableofcontents
+
+\input{sections/01_intro}
+
+% ------------------------------------------------ теория
+\parttitle{Теоретическая часть}
+\input{sections/t1_ml_basics}
+\input{sections/t2_perceptron}
+\input{sections/t3_mlp}
+\input{sections/t4_som}
+\input{sections/t5_ga_basics}
+\input{sections/t6_ga_operators}
+\input{sections/t7_combinatorial}
+
+% ------------------------------------------------ практикум
+\parttitle{Лабораторный практикум}
+\setcounter{section}{0}
+\renewcommand{\thesection}{Л\arabic{section}}
+\renewcommand{\theHsection}{lab.\arabic{section}}
+\input{sections/l0_general}
+\input{sections/l1_perceptron}
+\input{sections/l2_linear}
+\input{sections/l3_mlp}
+\input{sections/l4_som}
+\input{sections/l5_ga_1d}
+\input{sections/l6_ga_2d}
+\input{sections/l7_real_tsp}
+
+% ------------------------------------------------ источники и приложения
+\input{sections/references}
+
+\setcounter{section}{0}
+\renewcommand{\thesection}{\Asbuk{section}}
+\renewcommand{\theHsection}{app.\arabic{section}}
+\input{sections/appendix}
+
+\input{sections/99_imprint}
+
+\end{document}

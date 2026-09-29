@@ -1,0 +1,41 @@
+% ---------------------------------------------------------------- Приложение А
+\appendixsection{А}{справочное}{Справочник функций Python для лабораторных работ}
+\label{app:python}
+
+\begin{table}[!htb]
+\caption{Функции NumPy, SciPy и библиотек машинного обучения, используемые в практикуме}
+\label{tab:python-ref}
+\centering\small
+\begin{tabularx}{\textwidth}{>{\raggedright}p{4.0cm}>{\raggedright\arraybackslash}X}
+\toprule
+Задача & Функции \\
+\midrule
+Случайные числа (воспроизводимо) & \code{rng = np.random.default\_rng(seed)}; \code{rng.random}, \code{rng.integers}, \code{rng.normal}, \code{rng.uniform}, \code{rng.choice(p=...)}, \code{rng.permutation} \\
+Векторные операции & \code{@}, \code{np.outer}, \code{np.where}, \code{np.argsort}, \code{np.argmin}, \code{np.argmax}, \code{np.roll}, \code{np.cumsum}, \code{np.searchsorted}, \code{np.bitwise\_xor.accumulate} \\
+Линейная алгебра & \code{np.linalg.lstsq}, \code{np.linalg.pinv}, \code{np.linalg.solve}, \code{np.linalg.eigvalsh} \\
+Временные ряды & \code{np.lib.stride\_tricks.sliding\_window\_view} \\
+Предобработка & \code{sklearn.preprocessing.MinMaxScaler}, \code{sklearn.model\_selection.train\_test\_split} \\
+Модели для сравнения & \code{Perceptron}, \code{LinearRegression}, \code{SGDRegressor}, \code{MLPRegressor} (\code{sklearn}); \code{torch.nn.Sequential}, \code{torch.optim}; \code{MiniSom}; \code{KMeans} \\
+Метрики & \code{mean\_squared\_error}, \code{r2\_score}, \code{adjusted\_rand\_score} (\code{sklearn.metrics}); \code{som.quantization\_error}, \code{som.topographic\_error} \\
+Эталонные решения и проверка & \code{scipy.optimize.minimize\_scalar}, \code{differential\_evolution}, \code{least\_squares(method='lm')}, \code{check\_grad} \\
+Эволюционные библиотеки & \code{deap.tools} (\code{selTournament}, \code{cxUniform}, \code{cxBlend}, \code{cxPartialyMatched}, \code{cxOrdered}); \code{pygad.GA} \\
+Коммивояжёр & \code{scipy.spatial.distance.cdist}, \code{np.triu\_indices}, пакет \code{tsplib95} \\
+Графики и анимация & \code{plt.contourf}, \code{plt.scatter}, \code{matplotlib.animation.FuncAnimation}, \code{plotly.graph\_objects.FigureWidget} \\
+Интерфейс в Jupyter & \code{ipywidgets}: \code{IntSlider}, \code{FloatText}, \code{Dropdown}, \code{Button}, \code{Play}, \code{interact} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Типичный цикл работы: собственная реализация алгоритма на NumPy $\to$ проверка на примере с известным
+ответом $\to$ сравнение с библиотечной реализацией и эталонным решением SciPy $\to$ серия запусков с
+разными значениями \code{seed} и сводная статистика (доля успехов, медиана, худший результат).
+
+% ---------------------------------------------------------------- Приложение Б
+\appendixsection{Б}{справочное}{Листинг операторов для задачи коммивояжёра}
+\label{app:listings}
+
+Операторы для ЛР~№7 на NumPy: чтение файла TSPLIB, матрица расстояний \code{EUC\_2D}, циклический
+кроссинговер и векторный локальный поиск 2-opt; последняя строка проверяет CX на примере
+подраздела~\ref{sec:combinatorial}.4.
+
+\lstinputlisting{listings/tsp_cx.py}
