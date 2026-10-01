@@ -139,6 +139,7 @@
 
 % Списки: тире, без лишних интервалов
 \usepackage{enumitem}
+\setlist{beginpenalty=10000}   % не отрывать список от заголовка рубрики или вводной строки
 \setlist[itemize]{noitemsep, topsep=2pt, leftmargin=*, labelindent=1.25cm, label=--}
 \setlist[enumerate]{noitemsep, topsep=2pt, leftmargin=*, labelindent=1.25cm, label=\arabic*)}
 \newlist{steps}{enumerate}{1}
@@ -170,7 +171,7 @@
            {Ж}{{\CYRZH}}1 {З}{{\CYRZ}}1 {И}{{\CYRI}}1 {К}{{\CYRK}}1 {Л}{{\CYRL}}1 {М}{{\CYRM}}1
            {Н}{{\CYRN}}1 {О}{{\CYRO}}1 {П}{{\CYRP}}1 {Р}{{\CYRR}}1 {С}{{\CYRS}}1 {Т}{{\CYRT}}1
            {У}{{\CYRU}}1 {Ф}{{\CYRF}}1 {Х}{{\CYRH}}1 {Ц}{{\CYRC}}1 {Ч}{{\CYRCH}}1 {Ш}{{\CYRSH}}1
-           {Э}{{\CYREREV}}1 {Ю}{{\CYRYU}}1 {Я}{{\CYRYA}}1 {—}{{---}}1 {→}{{$\to$}}1
+           {Э}{{\CYREREV}}1 {Ю}{{\CYRYU}}1 {Я}{{\CYRYA}}1 {—}{{\textemdash}}1 {→}{{$\to$}}1
 }
 
 % Ссылки

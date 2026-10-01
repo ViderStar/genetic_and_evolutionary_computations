@@ -20,22 +20,33 @@
 Эталонные решения и проверка & \code{scipy.optimize.minimize\_scalar}, \code{differential\_evolution}, \code{least\_squares(method='lm')}, \code{check\_grad} \\
 Эволюционные библиотеки & \code{deap.tools} (\code{selTournament}, \code{cxUniform}, \code{cxBlend}, \code{cxPartialyMatched}, \code{cxOrdered}); \code{pygad.GA} \\
 Коммивояжёр & \code{scipy.spatial.distance.cdist}, \code{np.triu\_indices}, пакет \code{tsplib95} \\
+Безградиентная оптимизация & \code{cma.CMAEvolutionStrategy}, \code{cma.fmin2}; \code{optuna.create\_study}, \code{TPESampler}, \code{CmaEsSampler}, \code{NSGAIISampler}; \code{pymoo}: \code{NSGA2}, \code{minimize}, \code{get\_problem("zdt1")}, \code{HV}, \code{IGD} \\
+Подбор гиперпараметров & \code{sklearn.model\_selection.cross\_val\_score}, \code{StratifiedKFold}, \code{GridSearchCV}, \code{RandomizedSearchCV}; \code{sklearn.datasets.load\_wine}, \code{load\_digits}, \code{load\_breast\_cancer} \\
+Проверка и запуск кода модели & \code{ast.parse}, \code{ast.walk}, \code{subprocess.run(..., timeout=...)}, \code{concurrent.futures.ThreadPoolExecutor}; \code{anthropic.Anthropic().messages.create} \\
 Графики и анимация & \code{plt.contourf}, \code{plt.scatter}, \code{matplotlib.animation.FuncAnimation}, \code{plotly.graph\_objects.FigureWidget} \\
 Интерфейс в Jupyter & \code{ipywidgets}: \code{IntSlider}, \code{FloatText}, \code{Dropdown}, \code{Button}, \code{Play}, \code{interact} \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Типичный цикл работы: собственная реализация алгоритма на NumPy $\to$ проверка на примере с известным
-ответом $\to$ сравнение с библиотечной реализацией и эталонным решением SciPy $\to$ серия запусков с
-разными значениями \code{seed} и сводная статистика (доля успехов, медиана, худший результат).
-
 % ---------------------------------------------------------------- Приложение Б
-\appendixsection{Б}{справочное}{Листинг операторов для задачи коммивояжёра}
+\appendixsection{Б}{справочное}{Листинги программ}
 \label{app:listings}
 
-Операторы для ЛР~№7 на NumPy: чтение файла TSPLIB, матрица расстояний \code{EUC\_2D}, циклический
-кроссинговер и векторный локальный поиск 2-opt; последняя строка проверяет CX на примере
-подраздела~\ref{sec:combinatorial}.4.
+\emph{Операторы для задачи коммивояжёра (ЛР~№7)}: чтение файла TSPLIB, матрица расстояний
+\code{EUC\_2D}, циклический кроссинговер и векторный локальный поиск 2-opt; последняя строка проверяет
+CX на примере подраздела~\ref{sec:tsp}.
 
 \lstinputlisting{listings/tsp_cx.py}
+
+\emph{CMA-ES и IPOP-CMA-ES (ЛР~№8)} по учебнику Н.~Хансена~\cite{hansen2016}: порождение точек,
+взвешенная рекомбинация, пути эволюции, ранг-1 и ранг-$\mu$ обновления ковариационной матрицы,
+кумулятивная адаптация шага.
+
+\lstinputlisting{listings/cma_es.py}
+
+\emph{Мини-FunSearch (ЛР~№9)}: генерация примеров и оценка эвристики упаковки, классические правила,
+извлечение и статическая проверка кода от языковой модели, оценка в отдельном процессе с тайм-аутом,
+вызов модели через Anthropic SDK или Claude Code CLI и эволюционный цикл.
+
+\lstinputlisting{listings/funsearch.py}

@@ -1,0 +1,122 @@
+{
+ "baselines": {
+  "First Fit": {
+   "train": 5.254718169180089,
+   "test": 4.3558581327367225
+  },
+  "Best Fit": {
+   "train": 4.75838098358198,
+   "test": 3.9688614866826555
+  },
+  "Worst Fit": {
+   "train": 13.228397934893195,
+   "test": 13.108241858870326
+  }
+ },
+ "cmaes_param": {
+  "theta": [
+   45.22202218187807,
+   24.83687957103661,
+   8.67253278637872
+  ],
+  "train": 3.1727721980182517,
+  "test": 2.2918127269484794,
+  "seconds": 8.776579750003293
+ },
+ "funsearch": {
+  "model": "claude-opus-5-5",
+  "effort": "medium",
+  "backend": "cli",
+  "history": [
+   4.75838098358198,
+   4.75838098358198,
+   4.75838098358198,
+   4.75838098358198,
+   4.75838098358198,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.7185247409547264,
+   3.6145116588647377,
+   3.6145116588647377,
+   3.423438772898791,
+   3.423438772898791,
+   3.423438772898791,
+   3.423438772898791,
+   3.423438772898791,
+   3.423438772898791,
+   3.423438772898791,
+   3.3679605669298858,
+   3.3679605669298858,
+   3.3679605669298858,
+   3.3679605669298858,
+   3.3679605669298858,
+   3.3679605669298858,
+   3.3679605669298858,
+   3.3679605669298858,
+   3.3679605669298858,
+   3.3679605669298858,
+   3.3679605669298858,
+   2.275762512424908,
+   2.275762512424908,
+   2.275762512424908,
+   2.275762512424908,
+   2.275762512424908,
+   2.08167066296352,
+   2.08167066296352,
+   2.08167066296352,
+   2.0303079399403026,
+   2.0303079399403026,
+   2.0303079399403026,
+   2.0303079399403026,
+   2.0303079399403026,
+   2.0303079399403026,
+   2.0303079399403026,
+   2.0303079399403026,
+   2.0303079399403026,
+   2.0303079399403026
+  ],
+  "train": 2.0303079399403026,
+  "test": 0.744374290968678,
+  "code": "import numpy as np\nimport math\n\ndef priority(item, bins, capacity):\n    \"\"\"Версия 2: ядро v1 плюс мягкие поправки к остатку.\n\n    1. Точное заполнение (остаток 0) — наивысший приоритет.\n    2. Почти полное заполнение (остаток <= ~1% ёмкости); меньший остаток лучше.\n    3. Остальные кандидаты: разностная квадратичная оценка из v1 и поправки:\n       - штраф за «мёртвый» остаток (1%..12% ёмкости), в который почти ничего\n         не поместится; сила штрафа растёт с размером предмета;\n       - маленький бонус, если остаток ~ item: туда поместится ещё такой же\n         предмет и контейнер может закрыться точно;\n       - очень малое предпочтение более заполненным контейнерам.\n    Детерминированно; при равенстве побеждает меньший индекс.\n    \"\"\"\n    b = np.asarray(bins, dtype=np.float64)\n    n = b.shape[0]\n    if n == 0:\n        return b\n    if n == 1:\n        return np.zeros(1, dtype=np.float64)\n    it = float(max(item, 1e-09))\n    cap = float(capacity)\n    ext = np.concatenate([b, np.array([cap], dtype=np.float64)])\n    mx = float(np.max(ext))\n    s = (ext - mx) ** 2 / it + ext ** 2 / it ** 2 + ext ** 2 / it ** 3\n    gt = ext > it\n    s[gt] = -s[gt]\n    d = s.copy()\n    d[1:] = s[1:] - s[:-1]\n    base = d[:n].copy()\n    base[n - 1] = max(d[n - 1], d[n])\n    scale = float(np.max(np.abs(base)))\n    if not np.isfinite(scale) or scale <= 0:\n        scale = 1.0\n    score = base / scale\n    r = b - it\n    is_new = b >= cap\n    tiny = max(1.0, 0.01 * cap)\n    dead_hi = max(tiny + 1.0, 0.12 * cap)\n    dead = ~is_new & (r > tiny) & (r < dead_hi)\n    if np.any(dead):\n        t = (r - tiny) / (dead_hi - tiny)\n        strength = 0.05 * (0.6 + 0.4 * min(1.0, it / (0.3 * cap)))\n        score = score - dead * strength * (1.0 - t)\n    width = max(1.0, 0.02 * cap)\n    same = ~is_new & (r >= 0.9 * it)\n    if np.any(same):\n        score = score + 0.02 * np.exp(-((r - it) / width) ** 2) * same\n    fill = np.where(is_new, 0.0, 1.0 - b / cap)\n    score = score + 0.005 * fill\n    big = 10.0 + float(np.max(np.abs(score))) * 10.0\n    near = (r > 1e-09) & (r <= tiny) & ~is_new\n    if np.any(near):\n        score = np.where(near, big + (tiny - r), score)\n    exact = np.abs(r) < 1e-09\n    if np.any(exact):\n        score = np.where(exact, 3.0 * big, score)\n    score = score - 1e-12 * np.arange(n)\n    return score",
+  "calls": 60,
+  "valid": 60,
+  "cost": 2.8066560000000007,
+  "seconds": 299.2116499170006,
+  "top5": [
+   {
+    "train": 2.0303079399403026,
+    "code": "import numpy as np\nimport math\n\ndef priority(item, bins, capacity):\n    \"\"\"Версия 2: ядро v1 плюс мягкие поправки к остатку.\n\n    1. Точное заполнение (остаток 0) — наивысший приоритет.\n    2. Почти полное заполнение (остаток <= ~1% ёмкости); меньший остаток лучше.\n    3. Остальные кандидаты: разностная квадратичная оценка из v1 и поправки:\n       - штраф за «мёртвый» остаток (1%..12% ёмкости), в который почти ничего\n         не поместится; сила штрафа растёт с размером предмета;\n       - маленький бонус, если остаток ~ item: туда поместится ещё такой же\n         предмет и контейнер может закрыться точно;\n       - очень малое предпочтение более заполненным контейнерам.\n    Детерминированно; при равенстве побеждает меньший индекс.\n    \"\"\"\n    b = np.asarray(bins, dtype=np.float64)\n    n = b.shape[0]\n    if n == 0:\n        return b\n    if n == 1:\n        return np.zeros(1, dtype=np.float64)\n    it = float(max(item, 1e-09))\n    cap = float(capacity)\n    ext = np.concatenate([b, np.array([cap], dtype=np.float64)])\n    mx = float(np.max(ext))\n    s = (ext - mx) ** 2 / it + ext ** 2 / it ** 2 + ext ** 2 / it ** 3\n    gt = ext > it\n    s[gt] = -s[gt]\n    d = s.copy()\n    d[1:] = s[1:] - s[:-1]\n    base = d[:n].copy()\n    base[n - 1] = max(d[n - 1], d[n])\n    scale = float(np.max(np.abs(base)))\n    if not np.isfinite(scale) or scale <= 0:\n        scale = 1.0\n    score = base / scale\n    r = b - it\n    is_new = b >= cap\n    tiny = max(1.0, 0.01 * cap)\n    dead_hi = max(tiny + 1.0, 0.12 * cap)\n    dead = ~is_new & (r > tiny) & (r < dead_hi)\n    if np.any(dead):\n        t = (r - tiny) / (dead_hi - tiny)\n        strength = 0.05 * (0.6 + 0.4 * min(1.0, it / (0.3 * cap)))\n        score = score - dead * strength * (1.0 - t)\n    width = max(1.0, 0.02 * cap)\n    same = ~is_new & (r >= 0.9 * it)\n    if np.any(same):\n        score = score + 0.02 * np.exp(-((r - it) / width) ** 2) * same\n    fill = np.where(is_new, 0.0, 1.0 - b / cap)\n    score = score + 0.005 * fill\n    big = 10.0 + float(np.max(np.abs(score))) * 10.0\n    near = (r > 1e-09) & (r <= tiny) & ~is_new\n    if np.any(near):\n        score = np.where(near, big + (tiny - r), score)\n    exact = np.abs(r) < 1e-09\n    if np.any(exact):\n        score = np.where(exact, 3.0 * big, score)\n    score = score - 1e-12 * np.arange(n)\n    return score"
+   },
+   {
+    "train": 2.0303079399403026,
+    "code": "import numpy as np\nimport math\n\ndef priority(item, bins, capacity):\n    \"\"\"Гибрид разностной оценки в стиле FunSearch и явных правил закрытия контейнера.\n\n    Порядок приоритетов:\n      1. Точное заполнение (остаток 0).\n      2. Почти полное заполнение (остаток <= ~1% ёмкости); меньший остаток лучше.\n      3. Остальные кандидаты: разностная квадратичная оценка из версии 1.\n         К ней добавляются мягкие поправки:\n           - штраф за «мёртвый» остаток, масштаб которого зависит от item;\n           - небольшой бонус, если остаток близок к item: туда может лечь\n             такой же предмет и закрыть контейнер точно;\n           - слабое предпочтение более заполненным контейнерам.\n      4. Новый контейнер получает max(своя оценка, оценка фиктивного соседа).\n    Детерминированно; при равенстве побеждает меньший индекс.\n    \"\"\"\n    b = np.asarray(bins, dtype=np.float64)\n    n = b.shape[0]\n    if n == 0:\n        return b\n    if n == 1:\n        return np.zeros(1, dtype=np.float64)\n    it = float(max(item, 1e-09))\n    cap = float(capacity)\n    ext = np.concatenate([b, np.array([cap], dtype=np.float64)])\n    mx = float(np.max(ext))\n    s = (ext - mx) ** 2 / it + ext ** 2 / it ** 2 + ext ** 2 / it ** 3\n    gt = ext > it\n    s[gt] = -s[gt]\n    d = s.copy()\n    d[1:] = s[1:] - s[:-1]\n    base = d[:n].copy()\n    base[n - 1] = max(d[n - 1], d[n])\n    scale = float(np.max(np.abs(base)))\n    if not np.isfinite(scale) or scale <= 0:\n        scale = 1.0\n    score = base / scale\n    r = b - it\n    is_new = b >= cap\n    tiny = max(1.0, 0.01 * cap)\n    dead_hi = max(tiny + 1.0, min(0.12 * cap, max(0.06 * cap, 0.5 * it)))\n    dead = ~is_new & (r > tiny) & (r < dead_hi)\n    if np.any(dead):\n        t = (r - tiny) / (dead_hi - tiny)\n        strength = 0.05 * min(1.0, 0.5 + it / (0.4 * cap))\n        score = score - dead * strength * (1.0 - t)\n    width = max(1.0, 0.02 * cap)\n    twin = ~is_new & (r >= 0.9 * it)\n    if np.any(twin):\n        score = score + 0.02 * np.exp(-((r - it) / width) ** 2) * twin\n    fill = 1.0 - b / cap\n    score = score + 0.005 * fill * ~is_new\n    big = 10.0 + float(np.max(np.abs(score))) * 10.0\n    near = (r > 1e-09) & (r <= tiny) & ~is_new\n    if np.any(near):\n        score = np.where(near, big + (tiny - r), score)\n    exact = np.abs(r) < 1e-09\n    if np.any(exact):\n        score = np.where(exact, 3.0 * big, score)\n    score = score - 1e-12 * np.arange(n)\n    return score"
+   },
+   {
+    "train": 2.08167066296352,
+    "code": "import numpy as np\nimport math\n\ndef priority(item, bins, capacity):\n    \"\"\"Эвристика онлайн-упаковки, развитие v1.\n\n    Ядро взято из v1: разностная полиномиальная оценка в стиле FunSearch.\n    Изменения:\n      * Ядро нормировано к ёмкости 100 и защищено от переполнения и NaN.\n      * Штраф за «мёртвый» остаток плавно убывает (квадратично) и\n        сильнее всего действует на остатки, которые меньше самого\n        предмета: там вероятность дозаполнить контейнер низкая.\n      * Небольшой бонус получает остаток, в который поместится ещё один\n        такой же предмет (предметы часто приходят похожих размеров).\n      * Точное и почти полное заполнение идут первыми, как в v1.\n      * Новый контейнер получает max(своя оценка, 0).\n    Детерминированно; при равенстве побеждает меньший индекс.\n    \"\"\"\n    b_raw = np.asarray(bins, dtype=np.float64)\n    n = b_raw.shape[0]\n    if n == 0:\n        return b_raw\n    if n == 1:\n        return np.zeros(1, dtype=np.float64)\n    cap_raw = float(capacity) if capacity and capacity > 0 else 100.0\n    k = 100.0 / cap_raw\n    b = b_raw * k\n    cap = 100.0\n    it = max(float(item) * k, 1e-09)\n    ext = np.concatenate([b, np.array([cap], dtype=np.float64)])\n    mx = float(np.max(ext))\n    with np.errstate(over='ignore', invalid='ignore', divide='ignore'):\n        s = (ext - mx) ** 2 / it + ext ** 2 / it ** 2 + ext ** 2 / it ** 3\n    s = np.nan_to_num(s, nan=0.0, posinf=1e+300, neginf=-1e+300)\n    gt = ext > it\n    s[gt] = -s[gt]\n    d = s.copy()\n    with np.errstate(over='ignore', invalid='ignore'):\n        d[1:] = s[1:] - s[:-1]\n    d = np.nan_to_num(d, nan=0.0, posinf=1e+300, neginf=-1e+300)\n    base = d[:n].copy()\n    base[n - 1] = max(d[n - 1], d[n])\n    sc = float(np.max(np.abs(base)))\n    if not math.isfinite(sc) or sc <= 0:\n        sc = 1.0\n    score = base / sc\n    r = b - it\n    is_new = b >= cap - 1e-09\n    tiny = 1.0\n    dead_hi = 12.0\n    dead = ~is_new & (r > tiny) & (r < dead_hi)\n    if np.any(dead):\n        t = np.clip((r - tiny) / (dead_hi - tiny), 0.0, 1.0)\n        w = np.where(r < it, 0.06, 0.035)\n        score = score - dead * w * (1.0 - t) ** 2\n    fits_again = ~is_new & (r >= it - 1e-09) & (r > tiny)\n    if np.any(fits_again):\n        closeness = np.clip(1.0 - (r - it) / max(cap, 1.0), 0.0, 1.0)\n        score = score + fits_again * 0.01 * closeness\n    big = 10.0 + float(np.max(np.abs(score))) * 10.0\n    near = (r > 1e-09) & (r <= tiny + 1e-09) & ~is_new\n    if np.any(near):\n        score = np.where(near, big + (tiny - r), score)\n    exact = np.abs(r) < 1e-09\n    if np.any(exact):\n        score = np.where(exact, 3.0 * big, score)\n    score = np.nan_to_num(score, nan=-1e+300, posinf=1e+300, neginf=-1e+300)\n    score = score - 1e-12 * np.arange(n)\n    return score"
+   },
+   {
+    "train": 2.132791316779151,
+    "code": "import numpy as np\nimport math\n\ndef priority(item, bins, capacity):\n    \"\"\"Эвристика онлайн-упаковки, развитие v1.\n\n    Порядок приоритетов:\n      1. Точное заполнение (остаток 0) всегда лучше всего.\n      2. Почти полное заполнение (остаток <= ~1% ёмкости). Среди таких\n         контейнеров выше приоритет у меньшего остатка.\n      3. Для остальных кандидатов работает разностное ядро из v1\n         (в стиле FunSearch) с нормировкой по максимуму модуля.\n         Поверх него две поправки:\n           * мягкий штраф за «мёртвый» остаток, в который вряд ли\n             поместится следующий предмет;\n           * лёгкий бонус за остаток, в который поместится предмет того же\n             размера, что текущий (такое заполнение потом легко закрыть);\n           * новый пустой контейнер получает max(своя оценка, 0), как в v1,\n             но с небольшим понижением, если есть хороший уже открытый\n             контейнер.\n    Функция детерминирована: при равенстве побеждает меньший индекс.\n    \"\"\"\n    b = np.asarray(bins, dtype=np.float64)\n    n = b.shape[0]\n    if n == 0:\n        return b\n    if n == 1:\n        return np.zeros(1, dtype=np.float64)\n    cap = float(capacity) if capacity and capacity > 0 else 100.0\n    it = float(max(item, 1e-09))\n    ext = np.concatenate([b, np.array([cap], dtype=np.float64)])\n    mx = float(np.max(ext))\n    with np.errstate(over='ignore', invalid='ignore', divide='ignore'):\n        s = (ext - mx) ** 2 / it + ext ** 2 / it ** 2 + ext ** 2 / it ** 3\n    s = np.nan_to_num(s, nan=0.0, posinf=1e+300, neginf=-1e+300)\n    gt = ext > it\n    s[gt] = -s[gt]\n    d = s.copy()\n    d[1:] = s[1:] - s[:-1]\n    d = np.nan_to_num(d, nan=0.0, posinf=1e+300, neginf=-1e+300)\n    base = d[:n].copy()\n    base[n - 1] = max(d[n - 1], d[n])\n    scale = float(np.max(np.abs(base)))\n    if not math.isfinite(scale) or scale <= 0:\n        scale = 1.0\n    score = base / scale\n    r = b - it\n    is_new = b >= cap - 1e-09\n    tiny = max(1.0, 0.01 * cap)\n    dead_hi = max(tiny + 1.0, 0.12 * cap)\n    dead = ~is_new & (r > tiny) & (r < dead_hi)\n    if np.any(dead):\n        t = (r - tiny) / (dead_hi - tiny)\n        score = score - dead * 0.05 * (1.0 - t)\n    rep = ~is_new & (r >= it - 1e-09)\n    if np.any(rep):\n        k = np.floor((r + 1e-09) / it)\n        leftover = r - k * it\n        good = rep & (leftover <= tiny + 1e-09)\n        score = score + good * 0.02\n    if np.any(is_new) and np.any(~is_new):\n        best_old = float(np.max(np.where(~is_new, score, -np.inf)))\n        if best_old > -0.02:\n            score = np.where(is_new, score - 0.01, score)\n    big = 10.0 + float(np.max(np.abs(score))) * 10.0\n    if not math.isfinite(big):\n        big = 1e+300\n    near = (r > 1e-09) & (r <= tiny) & ~is_new\n    if np.any(near):\n        score = np.where(near, big + (tiny - r), score)\n    exact = np.abs(r) < 1e-09\n    if np.any(exact):\n        score = np.where(exact, 3.0 * big, score)\n    score = score - 1e-12 * np.arange(n)\n    return score"
+   },
+   {
+    "train": 2.2299748956090033,
+    "code": "import numpy as np\nimport math\n\ndef priority(item, bins, capacity):\n    \"\"\"Версия 3: ядро v1 и v2 плюс уточнённые мягкие поправки.\n\n    Порядок приоритетов:\n      1. Точное заполнение (остаток 0).\n      2. Почти полное заполнение (остаток <= ~1% ёмкости); меньший остаток лучше.\n      3. Остальные кандидаты: нормированная разностная полиномиальная оценка\n         (FunSearch-подобная) и поправки:\n         - штраф за «мёртвый» остаток (1%..12% ёмкости) с квадратичным\n           затуханием; сильнее, если остаток меньше предмета, и растёт\n           с размером предмета;\n         - бонус, если остаток близок к кратному размеру предмета\n           (1x, 2x): похожие предметы смогут закрыть контейнер точно;\n         - малое предпочтение более заполненным контейнерам (Best Fit);\n         - небольшой штраф за открытие нового контейнера, если есть\n           уже открытые, где остаток не станет «мёртвым».\n    Детерминированно; при равенстве побеждает меньший индекс.\n    \"\"\"\n    b_raw = np.asarray(bins, dtype=np.float64)\n    n = b_raw.shape[0]\n    if n == 0:\n        return b_raw\n    if n == 1:\n        return np.zeros(1, dtype=np.float64)\n    cap_raw = float(capacity) if capacity and capacity > 0 else 100.0\n    k = 100.0 / cap_raw\n    b = b_raw * k\n    cap = 100.0\n    it = max(float(item) * k, 1e-09)\n    ext = np.concatenate([b, np.array([cap], dtype=np.float64)])\n    mx = float(np.max(ext))\n    with np.errstate(over='ignore', invalid='ignore', divide='ignore'):\n        s = (ext - mx) ** 2 / it + ext ** 2 / it ** 2 + ext ** 2 / it ** 3\n    s = np.nan_to_num(s, nan=0.0, posinf=1e+300, neginf=-1e+300)\n    gt = ext > it\n    s[gt] = -s[gt]\n    d = s.copy()\n    with np.errstate(over='ignore', invalid='ignore'):\n        d[1:] = s[1:] - s[:-1]\n    d = np.nan_to_num(d, nan=0.0, posinf=1e+300, neginf=-1e+300)\n    base = d[:n].copy()\n    base[n - 1] = max(d[n - 1], d[n])\n    sc = float(np.max(np.abs(base)))\n    if not math.isfinite(sc) or sc <= 0:\n        sc = 1.0\n    score = base / sc\n    r = b - it\n    is_new = b >= cap - 1e-09\n    tiny = 1.0\n    dead_hi = 12.0\n    dead = ~is_new & (r > tiny) & (r < dead_hi)\n    if np.any(dead):\n        t = np.clip((r - tiny) / (dead_hi - tiny), 0.0, 1.0)\n        size_f = 0.6 + 0.4 * min(1.0, it / 30.0)\n        w = np.where(r < it, 0.06, 0.035) * size_f\n        score = score - dead * w * (1.0 - t) ** 2\n    open_ok = ~is_new & (r > tiny)\n    if np.any(open_ok):\n        width = 2.0\n        m1 = np.exp(-((r - it) / width) ** 2)\n        m2 = np.exp(-((r - 2.0 * it) / width) ** 2)\n        score = score + open_ok * (0.02 * m1 + 0.008 * m2)\n    fill = np.where(is_new, 0.0, 1.0 - b / cap)\n    score = score + 0.005 * fill\n    if n > 1 and is_new[-1]:\n        good_open = ~is_new & ((r >= dead_hi) | (r <= tiny + 1e-09))\n        if np.any(good_open):\n            score[-1] -= 0.003\n    big = 10.0 + float(np.max(np.abs(score))) * 10.0\n    near = (r > 1e-09) & (r <= tiny + 1e-09) & ~is_new\n    if np.any(near):\n        score = np.where(near, big + (tiny - r), score)\n    exact = np.abs(r) < 1e-09\n    if np.any(exact):\n        score = np.where(exact, 3.0 * big, score)\n    score = np.nan_to_num(score, nan=-1e+300, posinf=1e+300, neginf=-1e+300)\n    score = score - 1e-12 * np.arange(n)\n    return score"
+   }
+  ]
+ }
+}
